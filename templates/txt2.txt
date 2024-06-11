@@ -1,0 +1,54 @@
+<div class="popup" id="popup">
+    <div class="form-group" action="/roles" method="post">
+      <label for="exampleInputUsername1" id="text">Role</label>
+      <input type="text" class="form-control" id="exampleInputUsername1" placeholder="Add role" name='role'>
+      <div id="buttons">
+        <button type="submit" class="btn btn-primary mr-2">Save</button>
+        <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
+      </div>
+
+    </div>
+  </div>
+
+
+
+  @app.route("/employees", methods=['GET', 'POST'])
+def employee():
+    if request.method == 'POST':
+        e_name = request.form.get('e_name')
+        role_id = request.form.get('role_id')  # Corrected variable name
+        entry = Employees(e_name=e_name, e_role=role_id)  # Corrected attribute name
+
+        db_session = SessionLocal()
+        db_session.add(entry)
+        db_session.commit()
+        db_session.close()
+
+    db_session = SessionLocal()
+    employees = db_session.query(Employees).order_by(Employees.s_no.asc()).all()
+    roles = db_session.query(Roles).order_by(Roles.s_no.asc()).all()
+    db_session.close()
+
+    return render_template("Employees.html", employees=employees, roles=roles)
+
+
+
+    @app.route("/categories", methods=['GET', 'POST'])
+    def categories():
+        if request.method == 'POST':
+            cat = request.form.get('cat')
+    
+                # If the category doesn't exist, insert it
+            entry = Category(cat=cat)
+    
+            db_session = SessionLocal()
+            db_session.add(entry)
+            db_session.commit()
+            db_session.close()
+    
+        # Fetch all categories from the database and order them by s_no in ascending order
+        db_session = SessionLocal()
+        cats = db_session.query(Category).order_by(Category.s_no.asc()).all()
+        db_session.close()
+        
+        return render_template("foodCategories.html", cats=cats)

@@ -1,0 +1,69 @@
+.card{
+    background: linear-gradient(to bottom, transparent 50%, #8a82fb 50%, #407ed7);
+    background-size: 100% 200%;
+    background-position: 0 2.5%;
+    cursor: pointer;
+    -o-transition: 0.5s;
+    -webkit-transition: 0.5s;
+    -moz-transition: 0.5s;
+    -ms-transition: 0.5s;
+    transition: 0.5s;
+    -o-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    -ms-border-radius: 10px;
+    border-radius: 10px;
+}
+.card-body {
+    display: flex;
+    border-radius: 8px;
+    /* border: 2px solid red; */
+  }
+  
+  .card-title {
+    font-size: 4rem;
+    margin-top: 5%;
+    margin-left: 5%; /* Adjust the left margin as needed */
+    background: linear-gradient(to bottom, #8a82fb, #407ed7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  
+  .fa-solid {
+    font-size: 3rem; /* Adjust the size as needed */
+    margin-top: 5%;
+    margin-left: 33%; /* Adjust the left margin as needed */
+    background: linear-gradient(to bottom, #8a82fb, #407ed7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .card .card-title{
+    font-size: 2.44rem;
+  }
+  .card-body:hover{
+    box-shadow: 0 0 1em rgba(0, 0, 0, 0.404);
+}
+.card:hover .fa-solid{
+    color: #fff;
+    background: linear-gradient(to bottom, #fff, #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.card:hover .card-title{
+    color: #fff;
+    background: linear-gradient(to bottom, #fff, #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+
+
+/*  */
+
+
+
+
+
+1757-style.css

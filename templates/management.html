@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+{% block body %}
+<link rel="stylesheet" href="static\css\vertical-layout-light\style2.css">
+      <!-- partial -->
+      <div class="main-panel">
+        <div class="content-wrapper">
+          <div class="row">
+            <div class="col-lg-6 grid-margin stretch-card">
+
+              <div class="card">
+              <a href="/roles" class="card-link">
+                <div class="card-body">
+                  <i class="fa-solid fa-gear"></i>
+                  <h4 class="card-title">Roles</h4>
+                  <canvas id="lineChart"></canvas>
+                </div>
+              </a>
+              </div>
+            </div>
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card">
+                <a href="/employees" class="card-link">
+                  <div class="card-body">
+                    <i class="fa-solid fa-users"></i>
+                    <h4 class="card-title">Employees</h4>
+                    <canvas id="barChart"></canvas>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card">
+                <a href="/categories" class="card-link">
+
+                  <div class="card-body">
+                    <i class="fa-solid fa-utensils"></i>
+                    <h4 class="card-title">Food Categories</h4>
+                    <canvas id="lineChart"></canvas>
+                  </div>
+                </a>
+              </div>
+            </div>
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card">
+                <a href="/menu" class="card-link">
+                  <div class="card-body">
+                    <i class="fa-solid fa-bars"></i>
+                    <h4 class="card-title">Food Menu</h4>
+                    <canvas id="doughnutChart"></canvas>
+                  </div>
+                </a>
+              </div>
+
+              
+            </div>
+
+          </div>
+
+
+          <div class="row">
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card">
+                <a href="/status" class="card-link">
+                  <div class="card-body">
+                    <i class="fa-solid fa-signal"></i>
+                    <h4 class="card-title">Status</h4>
+                    <canvas id="barChart"></canvas>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <i class="fa-solid fa-bowl-food"></i>
+                  <h4 class="card-title">Orders</h4>
+                  <canvas id="lineChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <i class="fa-solid fa-tag"></i>
+                  <h4 class="card-title">Tables</h4>
+                  <canvas id="barChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-6 grid-margin grid-margin-lg-0 stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <i class="fa-solid fa-file-invoice"></i>
+                  <h4 class="card-title">Bill Generation</h4>
+                  <canvas id="pieChart"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6 grid-margin grid-margin-lg-0 stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <i class="fa-solid fa-money-bills"></i>
+                  <h4 class="card-title">Tax Management</h4>
+                  <canvas id="scatterChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+{% endblock %}

@@ -1,0 +1,64 @@
+.card {
+    background: linear-gradient(to bottom, transparent 50%, #4B49AC 50%, #5389d4);
+    background-size: 100% 200%;
+    background-position: 0 2.5%;
+    cursor: pointer;
+    -o-transition: background-color 0.5s;
+    -webkit-transition: background-color 0.5s;
+    -moz-transition: background-color 0.5s;
+    -ms-transition: background-color 0.5s;
+    transition: background-color 0.5s;
+    -o-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    -ms-border-radius: 10px;
+    border-radius: 10px;
+}
+
+.card-body {
+    display: flex;
+    border-radius: 8px;
+}
+
+.card-title,
+.fa-solid {
+    font-size: 4rem;
+    margin-top: 5%;
+    margin-left: 5%;
+    background: linear-gradient(to bottom, #4B49AC, #5389d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -o-transition: 0.5s;
+    -webkit-transition: 0.5s;
+    -moz-transition: 0.5s;
+    -ms-transition: 0.5s;
+    transition: 0.5s;
+}
+
+.card:hover .fa-solid,
+.card:hover .card-title {
+    background: transparent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-color: #F5F7FF;
+    -o-transition: 0.5s;
+    -webkit-transition: 0.5s;
+    -moz-transition: 0.5s;
+    -ms-transition: 0.5s;
+    transition: 0.5s;
+    
+}
+
+
+
+.card .card-title{
+    font-size: 2.125rem;
+}
+.card:hover{
+    background-position: 0 100%;
+    -o-transition: 0.5s;
+    -webkit-transition: 0.5s;
+    -moz-transition: 0.5s;
+    -ms-transition: 0.5s;
+    transition: 0.5s;
+}

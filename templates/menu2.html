@@ -1,0 +1,110 @@
+
+{% extends "layout.html" %}
+{% block body %}
+
+<link rel="stylesheet" href="static\css\vertical-layout-light\roles.css">
+<div class="main-panel">          
+  <div class="content-wrapper">
+    <div class="row">
+            <div class="col-lg-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="card">
+                    <div class="card-body">
+                      <h4 class="card-title">Add Items</h4>
+                      <p class="card-description">Specify<code>Items</code>with details including<code> status</code>for Site Functionality.</p>
+                      <div class="container-temp">
+                        
+                        <div class="template-demo" id="button-id">
+                          <button type="button" class="btn btn-social-icon btn-youtube" onclick="openPopup()"><i class="fa-solid fa-plus" id="plus1"></i></button>
+                        </div>
+
+
+                        <div class="popup" id="popup">
+                          <form action="/menu" method="post">
+                            <label for="exampleInputUsername1" id="text">Item</label>
+                            <input type="text" class="form-control" id="exampleInputUsername1" placeholder="Add Item" name="item">
+
+                            <label for="exampleInputUsername1" id="text2">Price</label>
+                            <input type="text" class="form-control" id="exampleInputUsername1" placeholder="Add Price" name="price">
+
+                            <label for="exampleInputUsername1" id="text2">Category</label>
+                            <span class="select2 select2-container select2-container--default select2-container--below" id="#myTextField">
+                              <select class="js-example-basic-single w-100" id="select" name="cat_id">
+                                {% for category in categories %}
+                                  <option value="{{ category.s_no }}">{{ category.cat }}</option>
+                                {% endfor %}
+                              </select>
+
+                              <label for="exampleInputUsername1" id="text2">Status</label>
+                              <span class="select2 select2-container select2-container--default select2-container--below" id="#myTextField">
+                                <select class="js-example-basic-single w-100" id="select">
+                                  <option class="option" value="AL">Available</option>
+                                  <option class="option" value="WY">Unavailable</option>
+                                </select>
+  
+                            </span>
+                          </form>
+                            <div id="buttons">
+                              <button type="submit" class="btn btn-primary mr-2">Save</button>
+                              <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
+                            </div>
+
+                          </div>
+                        </div>
+                        
+                        <div class="card-body" id="for-padding">
+                          <p class="card-description"><code id="search1">Search</code></p>
+                          <div class="template-demo">
+                            <div class="input-group mb-2 mr-sm-2">
+                              <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></div>
+                              </div>
+                              <input type="text" class="form-control" id="inlineFormInputGroupUsername2" placeholder="Search  here">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+
+                  <div class="table-responsive">
+                    <table class="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Item</th>
+                          <th>Price</th>
+                          <th>Category</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.s_no }}</td>
+                            <td>{{ item.item }}</td>  <!-- This line is added to display the item -->
+                            <td>{{ item.price }}</td>
+                            <td>{{ item.category.cat }}</td>
+                            <td>{{ item.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <script>
+              let = popup = document.getElementByID("popup");
+              function openPopup(){
+                popup.classList.add("open-popup")
+              }
+              function closePopup(){
+                popup.classList.remove("open-popup")
+              }
+            </script>
+
+
+{% endblock %}
