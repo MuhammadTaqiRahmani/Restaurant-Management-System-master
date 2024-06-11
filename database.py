@@ -2,14 +2,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import os
 
-server = '100.73.16.195:1433'
-database = 'DineEase'
+load_dotenv()
+server = os.getenv('DB_SERVER')
+database = os.getenv('DB_DATABASE')
 driver = '{ODBC Driver 17 for SQL Server}'
-username = 'SA'
-password = 'White4Life'
+username = os.getenv('DB_USERNAME')
+password = os.getenv('DB_PASSWORD')
 
-# Create the engine
 engine = create_engine(
     f"mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server",
     fast_executemany=True)
