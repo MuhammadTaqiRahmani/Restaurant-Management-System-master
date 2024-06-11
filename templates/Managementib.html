@@ -1,0 +1,50 @@
+
+{% extends "layout.html" %}
+{% block body %}
+
+<link rel="stylesheet" href="static\css\vertical-layout-light\management.css">
+
+    <div class="main-panel">
+    <div class="content-wrapper">
+      <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+          <div class="card">
+            <div class="card-body">
+              <a href="/roles" class="card-link"><button type="button" class="btn btn-primary" id="navbuttons">Roles</button></a>
+              <a href="/employees" class="card-link"><button type="button" class="btn btn-primary" id="navbuttons">Employees</button></a>
+              <a href="/categories" class="card-link"><button type="button" class="btn btn-primary" id="navbuttons">Categories</button></a>
+              <a href="/menu" class="card-link"><button type="button" class="btn btn-primary" id="navbuttons">Menu</button></a>
+              <a href="/status" class="card-link"><button type="button" class="btn btn-primary" id="navbuttons">Status</button></a>
+              <a href="/orders" class="card-link"><button type="button" class="btn btn-primary" id="navbuttons">Order</button></a>
+
+
+
+              <p class="card-title">Bill Generation</p>
+              <div class="row">
+                <div class="col-12">
+                  <div class="table-responsive">
+                    <table id="example" class="display expandable-table" style="width:100%">
+                      <thead>
+                        <tr>
+                          <th>S_No</th>
+                          <th>Customer ID</th>
+                          <th>Floor</th>
+                          <th>Table No</th>
+                          <th>Bill</th>
+                        </tr>
+                      </thead>
+                  </table>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+
+
+
+
+{% endblock %}

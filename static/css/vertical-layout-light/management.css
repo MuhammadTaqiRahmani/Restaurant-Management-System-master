@@ -1,0 +1,22 @@
+#navbuttons{
+    margin-bottom: 2%;
+
+    padding-left: 4%;
+    padding-right: 4%;
+    margin-top: 1%;
+}
+#forsearching{
+    border: none;
+    border-color: transparent;
+    border-radius: 15px;
+    margin-left: 15px;
+    padding-right: 18%;
+
+}
+#searchInput{
+    border-radius: 15px;
+    padding-right: 16%;
+    padding-left: 16%;
+    width: 269%;
+}
+

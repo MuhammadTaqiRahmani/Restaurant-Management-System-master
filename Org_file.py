@@ -111,30 +111,24 @@ class Status(Base):
     customer = Column(Integer)  # Add customer column
     table_no = Column(Integer)
     
-    order = relationship("Order", back_populates="status")
+
 
     def to_list(self):
-        return [self.s_no, self.floor, self.category, self.customer, self.table_no]
-
+        return [self.s_no, self.floor,self.category,self.customer,self.table_no]
 
     
-class Order(Base):
-    __tablename__ = 'orderTestDine'
+# class Order(Base):
+#     __tablename__ = 'orderTestDine'
     
-    s_no = Column(Integer, primary_key=True, autoincrement=True)
-    o_customer_id = Column(Integer, ForeignKey('statusTestDine.s_no'))
-    o_item = Column(String(80), ForeignKey('menuTestDine.item'))
-    amountOfItems = Column(Integer)
-    bill = Column(Integer)
+#     o_customer_id = Column(Integer, ForeignKey('statusTestDine.s_no'))
+#     o_item = Column(String(80))
+#     amountOfItems = Column(Integer)
+#     bill = Column(Integer)
     
-    status = relationship("Status", back_populates="order", foreign_keys=[o_customer_id])
-    item_details = relationship("Menu", foreign_keys=[o_item])
-
-    def to_list(self):
-        return [self.s_no, self.o_customer_id, self.status.floor, self.status.table_no, self.o_item, self.amountOfItems, self.bill]
-
-
-
+#     status = relationship("Status", back_populates="order")
+    
+#     def to_list(self):
+#         return [self.o_customer_id, self.o_item,self.amountOfItems,self.bill]
     
 
 Base.metadata.create_all(engine)
@@ -161,7 +155,7 @@ def table():
 
 @app.route("/management")
 def management():
-    return render_template("Managementib.html")
+    return render_template("management.html")
 
 @app.route("/roles", methods=['GET', 'POST'])
 def roles():
@@ -426,36 +420,6 @@ def update_status(id):
             return jsonify({'status': 'success', 'message': 'Status updated successfully', 'item': updated_status})
         else:
             return jsonify({'status': 'error', 'message': 'Status not found'}), 404
-        
-        
-
-@app.route("/orders", methods=['GET', 'POST'])
-def orders():
-    if request.method == 'POST':
-        o_customer_id = request.form.get('o_customer_id')
-        o_item = request.form.get('o_item')
-        amountOfItems = int(request.form.get('amountOfItems'))
-        bill = int(request.form.get('bill'))
-
-        with session_scope() as db_session:
-            entry = Order(o_customer_id=o_customer_id, o_item=o_item, amountOfItems=amountOfItems, bill=bill)
-            db_session.add(entry)
-
-    with session_scope() as db_session:
-        orders = db_session.query(
-            Order.s_no, 
-            Status.floor, 
-            Status.table_no, 
-            Order.o_item, 
-            Order.amountOfItems, 
-            Order.bill
-        ).join(Status, Order.o_customer_id == Status.s_no).order_by(Order.s_no.asc()).all()
-        
-        status = db_session.query(Status).order_by(Status.s_no.asc()).all()
-        status = [s.to_list() for s in status]
-
-    return render_template("orders.html", orders=orders, status=status)
-
 
 
 

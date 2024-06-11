@@ -1,0 +1,95 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<link rel="stylesheet" href="static\css\vertical-layout-light\roles.css">
+<div class="main-panel">          
+  <div class="content-wrapper">
+    <div class="row">
+            <div class="col-lg-12 grid-margin stretch-card">
+              <div class="card">
+                <div class="card-body">
+                  <div class="card">
+                    <div class="card-body">
+                      <h4 class="card-title">Add Items</h4>
+                      <p class="card-description">Specify<code>Items</code>with details including<code> status</code>for Site Functionality.</p>
+                      <div class="container-temp">
+                        
+                        <div class="template-demo" id="button-id">
+                          <button type="button" class="btn btn-social-icon btn-youtube" onclick="openPopup()"><i class="fa-solid fa-plus" id="plus1"></i></button>
+                        </div>
+
+                        
+                        <div class="popup" id="popup">
+                          <form method="post" action="/orders">
+                            <div class="form-group">
+                              <label for="itemInput" id="text">Item</label>
+                              <input type="text" class="form-control" id="itemInput" placeholder="Add Item" name="item">
+                              
+                              <label for="exampleInputUsername1" id="text2">Floor</label>
+                              <span class="select2 select2-container select2-container--default select2-container--below" id="myTextField">
+                                  <select class="js-example-basic-single w-100" id="select" name="floor">
+                                      <option class="option" value="Ground Floor">Ground Floor</option>
+                                      <option class="option" value="1st Floor">1st Floor</option>
+                                      <option class="option" value="2nd Floor">2nd Floor</option>
+                                  </select>
+                              </span>
+      
+                              <label for="exampleInputUsername1" id="text2">Category</label>
+                              <span class="select2 select2-container select2-container--default select2-container--below" id="myTextField">
+                                  <select class="js-example-basic-single w-100" id="select" name="category">
+                                      <option class="option" value="2 Person">2 Person</option>
+                                      <option class="option" value="4 Person">4 Person</option>
+                                      <option class="option" value="8 Person">8 Person</option>
+                                  </select>
+                              </span>
+      
+                              <label for="tableInput" id="text2">Table No</label>
+                              <input type="number" class="form-control" id="customerInput" placeholder="Add Table" name="table_no">
+                              
+                              <div id="buttons">
+                                <button type="submit" class="btn btn-primary mr-2">Save</button>
+                                <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+
+                  <div class="card-body" id="for-padding">
+                    <p class="card-description"><code id="search1">Search</code></p>
+                    <div class="template-demo">
+                      <div class="input-group mb-2 mr-sm-2">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></div>
+                        </div>
+                        <input type="text" class="form-control" id="searchInput" onkeyup="searchTable()"
+                          placeholder="Search here">
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+
+
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Customer id</th>
+                        <th>Floor</th>
+                        <th>Table No</th>
+                        <th>Item</th>
+                        <th>Item Amount</th>
+                        <th>Price</th>
+                      </tr>
+                    </thead>
+
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+         
+
+
+          {% endblock %}
