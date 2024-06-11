@@ -17,6 +17,7 @@ engine = create_engine(
     fast_executemany=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 @contextmanager
 def session_scope():
     """Provide a transactional scope around a series of operations."""
@@ -31,3 +32,9 @@ def session_scope():
         db_session.close()
 
 Base = declarative_base()
+
+def recreate_database():
+    """Drop all tables and recreate them."""
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+

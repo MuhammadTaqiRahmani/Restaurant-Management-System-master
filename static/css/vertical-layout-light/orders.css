@@ -1,0 +1,163 @@
+#for-padding {
+    padding-top: 0;
+    padding-left: 43%;
+}
+
+#button-id {
+    padding-top: 5px;
+}
+
+#col-6-padding {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.container-temp {
+    display: flex;
+}
+
+.popup {
+    display: none; /* Ensure this is set to none initially */
+    width: 400px;
+    background-color: #F5F7FF;
+    padding: 2% 3%;
+    border-radius: 8px;
+    position: fixed;
+    top: 50%; /* Adjusted to center vertically */
+    left: 50%;
+    transform: translate(-50%, -50%); /* Centers both horizontally and vertically */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: 0.3s;
+}
+
+#text, #text2 {
+    margin-left: 5px;
+    color: #4B49AC;
+    font-size: 15px;
+}
+#text2 {
+    margin-top: 20px;
+}
+
+#buttons {
+    margin-top: 20px;
+}
+
+.open-popup {
+    visibility: visible;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+#select, #edit-role {
+    margin-left: 2px;
+    border: 1px solid rgb(218, 215, 215);
+    padding: 3% 5%; 
+}
+
+#edit-emp-id, #edit-item-id {
+    margin-bottom: 20px;
+}
+
+#myTextField {
+    border: none;
+}
+
+.option {
+    color: rgb(172, 171, 171);
+}
+
+#plus1 {
+    font-size: 1.5rem;
+}
+
+.btn {
+    margin-right: 2%;
+}
+
+.btn-youtube.btn-social-icon-text {
+    padding-right: 6.5rem; 
+}
+
+.rightmost {
+    text-align: right;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 45px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+#trash, .delete-icon {
+    color: #e52d27;
+    cursor: pointer;
+}
+
+#trash:hover, .delete-icon:hover {
+    color: #ec5c57;
+}
+
+#edit {
+    color: #57B657;
+    cursor: pointer;
+}
+
+#edit:hover {
+    color: #88d388;
+}
+
+#sp1 {
+    margin-top: 0;
+    top: 0;
+}
