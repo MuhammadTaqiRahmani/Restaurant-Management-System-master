@@ -58,7 +58,6 @@ def update_role(role_id):
             db_session.add(role)
     return jsonify({'status': 'success', 'message': 'Role updated successfully'})
 
-# ---------------------------------------------------------------------------------
 @app.route("/employees", methods=['GET', 'POST'])
 def employee():
     if request.method == 'POST':
