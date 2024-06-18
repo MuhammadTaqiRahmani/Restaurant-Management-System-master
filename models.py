@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
+# creation of models
 class Roles(Base):
     __tablename__ = "rolesTestDine"
     s_no = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -80,7 +81,8 @@ class Bill(Base):
     order_id = Column(Integer, ForeignKey('orders.id'))
     total = Column(Integer, nullable=False)
     order = relationship("Order", back_populates="bill")  # Ensure this line is correct
-
+    
+    # for bill calculation
     def calculate_total(self):
         self.total = sum(item.menu_item.price * item.quantity for item in self.order.items)
         return self.total
