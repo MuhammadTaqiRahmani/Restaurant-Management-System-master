@@ -1,58 +1,36 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<link rel="stylesheet" href="static\css\vertical-layout-light\roles.css">
-<div class="main-panel">          
+<link rel="stylesheet" href="static/css/vertical-layout-light/roles.css">
+<div class="main-panel">
   <div class="content-wrapper">
     <div class="row">
-            <div class="col-lg-12 grid-margin stretch-card">
-              <div class="card">
-                <div class="card-body">
-                  <div class="card">
-                    <div class="card-body">
-                      <h4 class="card-title">Add Items</h4>
-                      <p class="card-description">Specify<code>Items</code>with details including<code> status</code>for Site Functionality.</p>
-                      <div class="container-temp">
-                        
-                        <div class="template-demo" id="button-id">
-                          <button type="button" class="btn btn-social-icon btn-youtube" onclick="openPopup()"><i class="fa-solid fa-plus" id="plus1"></i></button>
-                        </div>
+      <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <div class="card">
+              <div class="card-body">
+                <h4 class="card-title">Add Orders</h4>
+                <p class="card-description">Specify <code>Customer</code>to<code>Order</code> for Site Functionality.</p>
+                <div class="container-temp">
 
-                        
-                        <div class="popup" id="popup">
-                          <form method="post" action="/orders">
-                            <div class="form-group">
-                              <label for="itemInput" id="text">Item</label>
-                              <input type="text" class="form-control" id="itemInput" placeholder="Add Item" name="item">
-                              
-                              <label for="exampleInputUsername1" id="text2">Floor</label>
-                              <span class="select2 select2-container select2-container--default select2-container--below" id="myTextField">
-                                  <select class="js-example-basic-single w-100" id="select" name="floor">
-                                      <option class="option" value="Ground Floor">Ground Floor</option>
-                                      <option class="option" value="1st Floor">1st Floor</option>
-                                      <option class="option" value="2nd Floor">2nd Floor</option>
-                                  </select>
-                              </span>
-      
-                              <label for="exampleInputUsername1" id="text2">Category</label>
-                              <span class="select2 select2-container select2-container--default select2-container--below" id="myTextField">
-                                  <select class="js-example-basic-single w-100" id="select" name="category">
-                                      <option class="option" value="2 Person">2 Person</option>
-                                      <option class="option" value="4 Person">4 Person</option>
-                                      <option class="option" value="8 Person">8 Person</option>
-                                  </select>
-                              </span>
-      
-                              <label for="tableInput" id="text2">Table No</label>
-                              <input type="number" class="form-control" id="customerInput" placeholder="Add Table" name="table_no">
-                              
-                              <div id="buttons">
-                                <button type="submit" class="btn btn-primary mr-2">Save</button>
-                                <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
-                              </div>
-                            </div>
-                          </form>
+                  <div class="template-demo" id="button-id">
+                    <button type="button" class="btn btn-social-icon btn-youtube" onclick="openPopup()"><i class="fa-solid fa-plus" id="plus1"></i></button>
+                  </div>
+
+                  <div class="popup" id="popup">
+                    <form method="post" action="/orders">
+                      <div class="form-group">
+                        <label for="customerStatusIdInput" id="text2">Customer ID</label>
+                        <input type="number" class="form-control" id="customerInput" placeholder="Customer ID" name="customer_status_id">
+
+                        <div id="buttons">
+                          <button type="submit" class="btn btn-primary mr-2" onclick="addOrder()">Save</button>
+                          <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
                         </div>
+                      </div>
+                    </form>
+                  </div>
 
                   <div class="card-body" id="for-padding">
                     <p class="card-description"><code id="search1">Search</code></p>
@@ -61,35 +39,72 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></div>
                         </div>
-                        <input type="text" class="form-control" id="searchInput" onkeyup="searchTable()"
-                          placeholder="Search here">
+                        <input type="text" class="form-control" id="searchInput" onkeyup="searchTable()" placeholder="Search here">
                       </div>
-
                     </div>
                   </div>
                 </div>
 
-
                 <div class="table-responsive">
+                  <!-- order.html -->
                   <table class="table table-hover">
                     <thead>
                       <tr>
-                        <th>Customer id</th>
-                        <th>Floor</th>
-                        <th>Table No</th>
-                        <th>Item</th>
-                        <th>Item Amount</th>
-                        <th>Price</th>
+                        <th>Order ID</th>
+                        <th>Customer Status ID</th>
                       </tr>
                     </thead>
-
+                    <tbody>
+                      {% for order in orders %}
+                        <tr class="forhover" onclick="redirectToOrderInfo('{{ order.id }}')">
+                          <td>{{ order.id }}</td>
+                          <td>{{ order.customer_status_id }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
                   </table>
+
                 </div>
+                
               </div>
             </div>
           </div>
 
-         
+          <script>
+            let popup = document.getElementById("popup");
+
+            function openPopup() {
+              popup.classList.add("open-popup");
+            }
+
+            function closePopup() {
+              popup.classList.remove("open-popup");
+            }
 
 
-          {% endblock %}
+            function redirectToOrderInfo(orderId) {
+              window.location.href = `/orderinfo/${orderId}`;
+            }
+            
+            function searchTable() {
+              var input, filter, table, tr, td, i, txtValue;
+              input = document.getElementById("searchInput");
+              filter = input.value.toUpperCase();
+              table = document.querySelector(".table");
+              tr = table.getElementsByTagName("tr");
+
+              for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0];
+                if (td) {
+                  txtValue = td.textContent || td.innerText;
+                  if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                  } else {
+                    tr[i].style.display = "none";
+                  }
+                }
+              }
+            }
+          </script>
+
+{% endblock %}

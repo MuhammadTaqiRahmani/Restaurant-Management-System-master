@@ -1,2 +1,4 @@
 Flask4Life/
 restflask/
+__pycache__/
+.env
