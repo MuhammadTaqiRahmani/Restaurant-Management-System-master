@@ -1,11 +1,12 @@
-from flask import Flask,render_template,request, jsonify
+import os
+from flask import Flask, redirect,render_template,request, jsonify
 from sqlalchemy.orm import sessionmaker, joinedload, aliased
-from models import Roles, Employees, Category, Menu, Status, Order
+from models import OrderItem, Roles, Employees, Category, Menu, Status, Order
 from database import engine, session_scope, recreate_database
 
 app = Flask(__name__)
-
-recreate_database()
+app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
+#recreate_database()
 
 @app.route("/")
 def index():
@@ -275,46 +276,40 @@ def update_status(id):
         else:
             return jsonify({'status': 'error', 'message': 'Status not found'}), 404
         
-        
-
 @app.route("/orders", methods=['GET', 'POST'])
 def orders():
     if request.method == 'POST':
         customer_status_id = request.form.get('customer_status_id')
-        menu_item_id = request.form.get('menu_item_id')  # Assuming menu_item_id is sent from the form
-        quantity = int(request.form.get('amountOfItems'))
 
         with session_scope() as db_session:
-            # Fetch the menu item based on menu_item_id
-            menu_item = db_session.query(Menu).filter_by(s_no=menu_item_id).first()
-            if not menu_item:
-                return "Menu item not found", 404
-
-            # Create a new Order entry
-            new_order = Order(customer_status_id=customer_status_id)
-            db_session.add(new_order)
-            db_session.flush()  # To ensure new_order gets an ID
-
-            # Create a new association entry for the order and the menu item
-            #order_item_association = order_items_association.insert().values(order_id=new_order.s_no, menu_item_id=menu_item_id, quantity=quantity)
-            #db_session.execute(order_item_association)
-
-            # Optionally, calculate the bill immediately and update the order
-            # This step can be skipped if you prefer to calculate the bill on-the-fly when displaying orders
-            new_order.bill = new_order.calculate_bill()
-            db_session.add(new_order)
+            status = db_session.query(Status).filter(Status.s_no == customer_status_id).first()
+            if status:
+                new_order = Order(customer_status_id=customer_status_id)
+                db_session.add(new_order)
+                db_session.commit()
 
     with session_scope() as db_session:
-        orders = db_session.query(Order).all()
-        orders_list = []
-        for order in orders:
-            order_details = {
-                'customer_status_id': order.customer_status_id,
-                'items': [{'menu_item_id': item.s_no, 'quantity': assoc.quantity} for item, assoc in order.items],
-                'bill': order.bill
-            }
-            orders_list.append(order_details)
+        orders = db_session.query(Order.id, Order.customer_status_id).all()
+        orders_list = [{'id': order.id, 'customer_status_id': order.customer_status_id} for order in orders]
 
     return render_template("orders.html", orders=orders_list)
+
+
+@app.route("/orderinfo/<int:order_id>", methods=['GET', 'POST'])
+def order_info(order_id):
+    if request.method == 'POST':
+        menu_item_id = request.form.get('menu_item_id')
+        quantity = request.form.get('quantity')
+
+        with session_scope() as db_session:
+            # Create a new OrderItem instance and add it to the database
+            order_item = OrderItem(order_id=order_id, menu_item_id=menu_item_id, quantity=quantity)
+            db_session.add(order_item)
+            db_session.commit()
+
+        return redirect(f"/orderinfo/{order_id}")
+
+    return render_template("orderinfo.html", order_id=order_id)
+
 
 app.run(debug=True,host="0.0.0.0")
