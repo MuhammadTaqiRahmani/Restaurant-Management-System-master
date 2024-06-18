@@ -1,11 +1,12 @@
 import os
-from flask import Flask, redirect,render_template,request, jsonify
+from flask import Flask, flash, redirect,render_template,request, jsonify, url_for
 from sqlalchemy.orm import sessionmaker, joinedload, aliased
 from models import OrderItem, Roles, Employees, Category, Menu, Status, Order
 from database import engine, session_scope, recreate_database
 
 app = Flask(__name__)
 app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
+app.secret_key = 'Anti_Minsh'
 #recreate_database()
 
 @app.route("/")
@@ -294,22 +295,61 @@ def orders():
 
     return render_template("orders.html", orders=orders_list)
 
+def get_orders_data(order_id):
+    with session_scope() as db_session:
+        order = db_session.query(Order).filter(Order.id == order_id).first()
+        if not order:
+            return None 
+        
+        order_items = db_session.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+        
+        order_data = {
+            'order_id': order.id,
+            'customer_status_id': order.customer_status_id,
+            'items': []
+        }
+        
+        for item in order_items:
+            menu_item = db_session.query(Menu).filter(Menu.s_no == item.menu_item_id).first()
+            order_data['items'].append({
+                'menu_item_id': item.menu_item_id,
+                'menu_item_name': menu_item.item if menu_item else 'Unknown',
+                'quantity': item.quantity,
+                'price': menu_item.price if menu_item else 0,
+                'aggregate_price': item.quantity * menu_item.price if menu_item else 0
+            })
+        
+        return order_data
 
 @app.route("/orderinfo/<int:order_id>", methods=['GET', 'POST'])
 def order_info(order_id):
     if request.method == 'POST':
-        menu_item_id = request.form.get('menu_item_id')
-        quantity = request.form.get('quantity')
+        try:
+            menu_item_id = int(request.form.get('menu_item_id', 0))
+            quantity = int(request.form.get('quantity', 0))
 
-        with session_scope() as db_session:
-            # Create a new OrderItem instance and add it to the database
-            order_item = OrderItem(order_id=order_id, menu_item_id=menu_item_id, quantity=quantity)
-            db_session.add(order_item)
-            db_session.commit()
+            if menu_item_id <= 0 or quantity <= 0:
+                flash("Invalid menu item ID or quantity.", "error")
+                return redirect(url_for('order_info', order_id=order_id))
 
-        return redirect(f"/orderinfo/{order_id}")
+            with session_scope() as db_session:
+                order_item = OrderItem(order_id=order_id, menu_item_id=menu_item_id, quantity=quantity)
+                db_session.add(order_item)
+                db_session.commit()
+                flash("Item added successfully.", "success")
 
-    return render_template("orderinfo.html", order_id=order_id)
+        except ValueError:
+            flash("Invalid input. Please enter valid numbers.", "error")
+        except Exception as e:
+            flash(f"An error occurred: {str(e)}", "error")
+
+        return redirect(url_for('order_info', order_id=order_id))
+
+    orders_data = get_orders_data(order_id)
+    print(f"Orders Data: {orders_data}")
+    return render_template("orderinfo.html", order_id=order_id, orders_data=orders_data)
+
+
 
 
 app.run(debug=True,host="0.0.0.0")

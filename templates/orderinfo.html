@@ -10,27 +10,30 @@
             <div class="card">
               <div class="card-body">
                 <h4 class="card-title">Add Orders</h4>
-                <p class="card-description">Specify <code>Customer</code>to<code>Order</code> for Site Functionality.</p>
+                <p class="card-description">Specify <code>Customer</code> to <code>Order</code> for Site Functionality.
+                </p>
                 <div class="container-temp">
 
                   <div class="template-demo" id="button-id">
-                    <button type="button" class="btn btn-social-icon btn-youtube" onclick="openPopup()"><i class="fa-solid fa-plus" id="plus1"></i></button>
+                    <button type="button" class="btn btn-social-icon btn-youtube" onclick="openPopup()"
+                      aria-label="Add Order"><i class="fa-solid fa-plus" id="plus1"></i></button>
                   </div>
 
                   <div class="popup" id="popup">
                     <form method="post" action="/orderinfo/{{ order_id }}">
                       <div class="form-group">
                         <label for="menuItemInput">Menu Item ID</label>
-                        <input type="number" class="form-control" id="menuItemInput" placeholder="Enter Menu Item ID" name="menu_item_id">
-                        
+                        <input type="number" class="form-control" id="menuItemInput" placeholder="Enter Menu Item ID"
+                          name="menu_item_id" required>
+
                         <label for="amountOfItemsInput">Quantity</label>
-                        <input type="number" class="form-control" id="amountOfItemsInput" placeholder="Enter Quantity" name="quantity">
-                    
+                        <input type="number" class="form-control" id="amountOfItemsInput" placeholder="Enter Quantity"
+                          name="quantity" required>
+
                         <button type="submit" class="btn btn-primary mr-2">Save</button>
-                        <button type="button" class="btn btn-inverse-dark btn-fw" onclick="window.history.back();">Cancel</button>
+                        <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
                       </div>
                     </form>
-                    
                   </div>
 
                   <div class="card-body" id="for-padding">
@@ -40,13 +43,13 @@
                         <div class="input-group-prepend">
                           <div class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></div>
                         </div>
-                        <input type="text" class="form-control" id="searchInput" onkeyup="searchTable()" placeholder="Search here">
+                        <input type="text" class="form-control" id="searchInput" onkeyup="searchTable()"
+                          placeholder="Search here">
                       </div>
                     </div>
                   </div>
                 </div>
 
-                
                 <div class="table-responsive">
                   <table class="table table-hover">
                     <thead>
@@ -59,34 +62,46 @@
                       </tr>
                     </thead>
                     <tbody>
-                      {% for order in orders_data %}
+                      {% for item in orders_data['items'] %}
                       <tr>
-                        <td>{{ order.item_id }}</td>
-                        <td>{{ order.item_name }}</td>
-                        <td>{{ order.quantity }}</td>
-                        <td>{{ order.price_per_unit }}</td>
-                        <td>{{ order.sum_of_prices }}</td>
+                        <td>{{ item.menu_item_id }}</td>
+                        <td>{{ item.menu_item_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.price }}</td>
+                        <td>{{ item.aggregate_price }}</td>
                       </tr>
                       {% endfor %}
                     </tbody>
                   </table>
                 </div>
-
-
               </div>
+
             </div>
           </div>
-          <script>
-            let popup = document.getElementById("popup");
-
-            function openPopup() {
-              popup.classList.add("open-popup");
-            }
-
-            function closePopup() {
-              popup.classList.remove("open-popup");
-            }
-          </script>
+        </div>
 
 
-{% endblock %}
+      </div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+  </div>
+  <script>
+    let popup = document.getElementById("popup");
+
+    function openPopup() {
+      popup.classList.add("open-popup");
+    }
+
+    function closePopup() {
+      popup.classList.remove("open-popup");
+    }
+  </script>
+
+
+  {% endblock %}
