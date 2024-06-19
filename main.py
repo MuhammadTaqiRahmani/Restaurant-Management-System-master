@@ -294,8 +294,17 @@ def orders():
                 db_session.commit()
 
     with session_scope() as db_session:
-        orders = db_session.query(Order.id, Order.customer_status_id).all()
-        orders_list = [{'id': order.id, 'customer_status_id': order.customer_status_id} for order in orders]
+        orders = db_session.query(Order).all()
+        orders_list = []
+
+        for order in orders:
+            order_data = get_orders_data(order.id)
+            if order_data:
+                orders_list.append({
+                    'id': order.id,
+                    'customer_status_id': order.customer_status_id,
+                    'total_bill': order_data['total_bill']
+                })
 
     return render_template("orders.html", orders=orders_list)
 
@@ -310,20 +319,30 @@ def get_orders_data(order_id):
         order_data = {
             'order_id': order.id,
             'customer_status_id': order.customer_status_id,
-            'items': []
+            'items': [],
+            'total_bill': 0  # Initialize total bill
         }
+        
+        total_bill = 0  # Initialize total bill calculation
         
         for item in order_items:
             menu_item = db_session.query(Menu).filter(Menu.s_no == item.menu_item_id).first()
+            item_price = menu_item.price if menu_item else 0
+            aggregate_price = item.quantity * item_price
+            total_bill += aggregate_price
+            
             order_data['items'].append({
                 'menu_item_id': item.menu_item_id,
                 'menu_item_name': menu_item.item if menu_item else 'Unknown',
                 'quantity': item.quantity,
-                'price': menu_item.price if menu_item else 0,
-                'aggregate_price': item.quantity * menu_item.price if menu_item else 0
+                'price': item_price,
+                'aggregate_price': aggregate_price
             })
         
+        order_data['total_bill'] = total_bill  # Set the total bill
+        
         return order_data
+
 
 @app.route("/orderinfo/<int:order_id>", methods=['GET', 'POST'])
 def order_info(order_id):

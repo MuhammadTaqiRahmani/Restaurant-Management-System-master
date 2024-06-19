@@ -52,6 +52,7 @@
                       <tr>
                         <th>Order ID</th>
                         <th>Customer Status ID</th>
+                        <th>Bill (Rs)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -59,6 +60,7 @@
                         <tr class="forhover" onclick="redirectToOrderInfo('{{ order.id }}')">
                           <td>{{ order.id }}</td>
                           <td>{{ order.customer_status_id }}</td>
+                          <td>{{ order.total_bill }}</td>
                         </tr>
                       {% endfor %}
                     </tbody>
