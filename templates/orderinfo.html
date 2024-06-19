@@ -9,8 +9,8 @@
           <div class="card-body">
             <div class="card">
               <div class="card-body">
-                <h4 class="card-title">Add Orders</h4>
-                <p class="card-description">Specify <code>Customer</code> to <code>Order</code> for Site Functionality.
+                <h4 class="card-title">Add Item for Order</h4>
+                <p class="card-description">Specify <code>Item</code> and <code>Quantity</code> for Site Functionality.
                 </p>
                 <div class="container-temp">
 
@@ -22,16 +22,18 @@
                   <div class="popup" id="popup">
                     <form method="post" action="/orderinfo/{{ order_id }}">
                       <div class="form-group">
-                        <label for="menuItemInput">Menu Item ID</label>
+                        <label for="menuItemInput" id="text2">Menu Item ID</label>
                         <input type="number" class="form-control" id="menuItemInput" placeholder="Enter Menu Item ID"
                           name="menu_item_id" required>
 
-                        <label for="amountOfItemsInput">Quantity</label>
+                        <label for="amountOfItemsInput" id="text2">Quantity</label>
                         <input type="number" class="form-control" id="amountOfItemsInput" placeholder="Enter Quantity"
                           name="quantity" required>
 
-                        <button type="submit" class="btn btn-primary mr-2">Save</button>
-                        <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
+                        <div id="buttons">
+                          <button type="submit" class="btn btn-primary mr-2">Save</button>
+                          <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
+                        </div>
                       </div>
                     </form>
                   </div>
@@ -55,9 +57,9 @@
                     <thead>
                       <tr>
                         <th>Item ID</th>
-                        <th>Item Name</th>
+                        <th>Item</th>
                         <th>Quantity</th>
-                        <th>Price per unit</th>
+                        <th>Price per Item</th>
                         <th>Sum of prices</th>
                       </tr>
                     </thead>
