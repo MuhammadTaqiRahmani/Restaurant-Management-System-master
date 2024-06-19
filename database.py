@@ -7,15 +7,14 @@ import os
 
 load_dotenv(override=True)
 
-# connection with database server
 server = os.getenv('DB_SERVER')
 database = os.getenv('DB_DATABASE')
-driver = '{ODBC Driver 17 for SQL Server}'
+driver = 'ODBC Driver 17 for SQL Server'
 username = os.getenv('DB_USERNAME')
 password = os.getenv('DB_PASSWORD')
 
 engine = create_engine(
-    f"mssql+pyodbc://@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server",
+    f"mssql+pyodbc://{username}:{password}@{server}/{database}?driver={driver}",
     fast_executemany=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
