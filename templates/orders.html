@@ -61,6 +61,10 @@
                           <td>{{ order.id }}</td>
                           <td>{{ order.customer_status_id }}</td>
                           <td>{{ order.total_bill }}</td>
+                          <td class="rightmost">
+                            <i class="fa-solid fa-pen-to-square" id="edit"></i> &nbsp; &nbsp;
+                            <i class="fa-solid fa-trash" id="trash" onclick="deleteOrder(event, '{{ order.id }}')"></i>
+                          </td>
                         </tr>
                       {% endfor %}
                     </tbody>
@@ -119,7 +123,30 @@
                 }
               }
             }
-          </script>
+
+            function deleteOrder(event, orderId) {
+              event.stopPropagation(); // Prevent the row click event from triggering
+              if (confirm("Are you sure you want to delete this order?")) {
+                fetch(`/orders/delete/${orderId}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
+                })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.status === 'success') {
+                    alert(data.message);
+                    location.reload(); // Reload the page to reflect the changes
+                  } else {
+                    alert("Error: " + data.message);
+                  }
+                })
+                .catch(error => {
+                  alert("Error: " + error);
+                });
+              }
+            }
           </script>
 
 {% endblock %}

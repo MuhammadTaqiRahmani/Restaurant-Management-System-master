@@ -308,6 +308,19 @@ def orders():
 
     return render_template("orders.html", orders=orders_list)
 
+
+@app.route("/orders/delete/<int:order_id>", methods=['POST'])
+def delete_order(order_id):
+    with session_scope() as db_session:
+        order = db_session.query(Order).filter(Order.id == order_id).first()
+        if order:
+            # Delete associated order items first
+            db_session.query(OrderItem).filter(OrderItem.order_id == order_id).delete()
+            # Then delete the order
+            db_session.delete(order)
+    return jsonify({'status': 'success', 'message': 'Order deleted successfully'})
+
+
 def get_orders_data(order_id):
     with session_scope() as db_session:
         order = db_session.query(Order).filter(Order.id == order_id).first()
