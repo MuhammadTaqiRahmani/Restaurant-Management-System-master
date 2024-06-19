@@ -398,6 +398,31 @@ def delete_order_item(menu_item_id):
                 return jsonify({'status': 'error', 'message': 'Order item not found'}), 404
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+@app.route("/orderinfo/update/<int:menu_item_id>", methods=['POST'])
+def update_order_item(menu_item_id):
+    try:
+        quantity = int(request.form.get('edit_quantity'))
+
+        with session_scope() as db_session:
+            order_item = db_session.query(OrderItem).filter(OrderItem.menu_item_id == menu_item_id).first()
+            if order_item:
+                order_item.quantity = quantity
+                db_session.add(order_item)
+                db_session.commit()
+                return jsonify({'status': 'success', 'message': 'Order item quantity updated successfully'})
+            else:
+                return jsonify({'status': 'error', 'message': 'Order item not found'}), 404
+    except ValueError:
+        return jsonify({'status': 'error', 'message': 'Invalid quantity format'}), 400
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+
+
+
+
 
 
 

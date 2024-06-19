@@ -38,6 +38,24 @@
                     </form>
                   </div>
 
+
+                  <div class="popup" id="edit-popup">
+                    <form id="edit-form" method="post">
+                      <div class="form-group">
+                        <label for="ItemID" id="text">Item ID</label>
+                        <input type="text" class="form-control" id="edit-menu-item-id" name="edit_menu_item_id" readonly>
+
+                        <label for="edit-quantity" id="text2">Edit Quantity</label>
+                        <input type="number" class="form-control" id="edit-quantity" name="edit_quantity" placeholder="Edit quantity">
+                        
+                        <div id="buttons">
+                          <button type="submit" class="btn btn-primary mr-2">Update</button>
+                          <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closeEditPopup()">Cancel</button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+
                   <div class="card-body" id="for-padding">
                     <p class="card-description"><code id="search1">Search</code></p>
                     <div class="template-demo">
@@ -72,7 +90,7 @@
                         <td>{{ item.price }}</td>
                         <td>{{ item.aggregate_price }}</td>
                         <td class="rightmost">
-                          <i class="fa-solid fa-pen-to-square" id="edit" onclick="openEditOrderItemPopup({{ item.menu_item_id }}, '{{ item.menu_item_name }}', {{ item.quantity }})"></i> &nbsp; &nbsp;
+                          <i class="fa-solid fa-pen-to-square" id="edit" onclick="openEditPopup('{{ item.menu_item_id }}', '{{ item.quantity }}')"></i> &nbsp; &nbsp;
                           <i class="fa-solid fa-trash" id="trash" onclick="deleteOrderItem({{ item.menu_item_id }})"></i>
                         </td>
                       </tr>
@@ -93,6 +111,10 @@
   </div>
       <script>
         let popup = document.getElementById("popup");
+        let editPopup = document.getElementById("edit-popup");
+        let editForm = document.getElementById("edit-form");
+        let editMenuItemIdField = document.getElementById("edit-menu-item-id");
+        let editQuantityField = document.getElementById("edit-quantity");
 
         function openPopup() {
           popup.classList.add("open-popup");
@@ -100,6 +122,16 @@
 
         function closePopup() {
           popup.classList.remove("open-popup");
+        }
+
+        function openEditPopup(menuItemId, quantity) {
+          editMenuItemIdField.value = menuItemId;
+          editQuantityField.value = quantity;
+          editPopup.classList.add("open-popup");
+        }
+      
+        function closeEditPopup() {
+          editPopup.classList.remove("open-popup");
         }
         function searchTable() {
           var input, filter, table, tr, i;
@@ -160,8 +192,37 @@
               })
               .catch(error => console.error('Error:', error));
           }
-      }
+        }
         
+              // Handle form submission for edit form
+        editForm.addEventListener('submit', function(event) {
+          event.preventDefault();
+          const menuItemId = editMenuItemIdField.value;
+          const quantity = editQuantityField.value;
+
+          fetch(`/orderinfo/update/${menuItemId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: `edit_quantity=${encodeURIComponent(quantity)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === 'success') {
+                alert(data.message);
+                // Update the quantity in the table cell
+                const row = document.querySelector(`tr[data-menu-item-id='${menuItemId}'] td:nth-child(3)`);
+                if (row) {
+                  row.textContent = quantity;
+                }
+                closeEditPopup();
+              } else {
+                alert('Failed to update quantity');
+              }
+            })
+            .catch(error => console.error('Error:', error));
+        });
       </script>
 
 
