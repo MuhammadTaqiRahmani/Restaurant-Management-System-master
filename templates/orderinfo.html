@@ -133,43 +133,7 @@
         function closeEditPopup() {
           editPopup.classList.remove("open-popup");
         }
-        function searchTable() {
-          var input, filter, table, tr, i;
-          input = document.getElementById("searchInput");
-          filter = input.value.toUpperCase();
-          table = document.querySelector(".table");
-          tr = table.getElementsByTagName("tr");
-      
-          for (i = 0; i < tr.length; i++) {
-            let tdId = tr[i].getElementsByTagName("td")[0];
-            let tdName = tr[i].getElementsByTagName("td")[1];
-            let tdQuantity = tr[i].getElementsByTagName("td")[2];
-            let tdPrice = tr[i].getElementsByTagName("td")[3];
-            let tdTotalPrice = tr[i].getElementsByTagName("td")[4];
-      
-            if (tdId || tdName || tdQuantity || tdPrice || tdTotalPrice) {
-              let txtId = tdId.textContent || tdId.innerText;
-              let txtName = tdName.textContent || tdName.innerText;
-              let txtQuantity = tdQuantity.textContent || tdQuantity.innerText;
-              let txtPrice = tdPrice.textContent || tdPrice.innerText;
-              let txtTotalPrice = tdTotalPrice.textContent || tdTotalPrice.innerText;
-      
-              if (
-                txtId.toUpperCase().indexOf(filter) > -1 ||
-                txtName.toUpperCase().indexOf(filter) > -1 ||
-                txtQuantity.toUpperCase().indexOf(filter) > -1 ||
-                txtPrice.toUpperCase().indexOf(filter) > -1 ||
-                txtTotalPrice.toUpperCase().indexOf(filter) > -1
-              ) {
-                tr[i].style.display = "";
-                tr[i].classList.add("highlight");
-              } else {
-                tr[i].style.display = "none";
-                tr[i].classList.remove("highlight");
-              }
-            }
-          }
-        }
+
         function deleteOrderItem(menuItemId) {
           if (confirm('Are you sure you want to delete this item?')) {
               fetch(`/orderinfo/delete/${menuItemId}`, {
@@ -195,34 +159,30 @@
         }
         
               // Handle form submission for edit form
-        editForm.addEventListener('submit', function(event) {
-          event.preventDefault();
-          const menuItemId = editMenuItemIdField.value;
-          const quantity = editQuantityField.value;
-
-          fetch(`/orderinfo/update/${menuItemId}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              body: `edit_quantity=${encodeURIComponent(quantity)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.status === 'success') {
-                alert(data.message);
-                // Update the quantity in the table cell
-                const row = document.querySelector(`tr[data-menu-item-id='${menuItemId}'] td:nth-child(3)`);
-                if (row) {
-                  row.textContent = quantity;
-                }
-                closeEditPopup();
-              } else {
-                alert('Failed to update quantity');
-              }
-            })
-            .catch(error => console.error('Error:', error));
-        });
+              editForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const menuItemId = editMenuItemIdField.value;
+                const quantity = editQuantityField.value;
+            
+                fetch(`/orderinfo/update/${menuItemId}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                  },
+                  body: `edit_quantity=${encodeURIComponent(quantity)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.status === 'success') {
+                    alert(data.message);
+                    location.reload(); // Reload the page on successful update
+                  } else {
+                    alert('Failed to update quantity');
+                  }
+                })
+                .catch(error => console.error('Error:', error));
+              });
+              
       </script>
 
 

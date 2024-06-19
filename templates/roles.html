@@ -142,33 +142,6 @@
                 }
               }
     
-              function searchTable() {
-                var input, filter, table, tr, i;
-                input = document.getElementById("searchInput");
-                filter = input.value.toUpperCase();
-                table = document.querySelector(".table");
-                tr = table.getElementsByTagName("tr");
-  
-                for (i = 0; i < tr.length; i++) {
-                  let tdId = tr[i].getElementsByTagName("td")[0];
-                  let tdRole = tr[i].getElementsByTagName("td")[1];
-  
-                  if (tdId || tdRole) {
-                    let txtId = tdId.textContent || tdId.innerText;
-                    let txtRole = tdRole.textContent || tdRole.innerText;
-  
-                    if (txtId.toUpperCase().indexOf(filter) > -1 || txtRole.toUpperCase().indexOf(filter) > -1) {
-                      tr[i].style.display = "";
-                      tr[i].classList.add("highlight");
-                    } else {
-                      tr[i].style.display = "none";
-                      tr[i].classList.remove("highlight");
-                    }
-                  }
-                }
-              }
-
-    
               // Handle form submission for edit form
               editForm.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -197,6 +170,7 @@
                 })
                 .catch(error => console.error('Error:', error));
               });
+
             </script>
             
         

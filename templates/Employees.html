@@ -169,33 +169,6 @@
                 }
               }
 
-              function searchTable() {
-                var input, filter, table, tr, i;
-                input = document.getElementById("searchInput");
-                filter = input.value.toUpperCase();
-                table = document.querySelector(".table");
-                tr = table.getElementsByTagName("tr");
-
-                for (i = 0; i < tr.length; i++) {
-                  let tdId = tr[i].getElementsByTagName("td")[0];
-                  let tdName = tr[i].getElementsByTagName("td")[1];
-                  let tdRole = tr[i].getElementsByTagName("td")[2];
-
-                  if (tdId || tdName || tdRole) {
-                    let txtId = tdId.textContent || tdId.innerText;
-                    let txtName = tdName.textContent || tdName.innerText;
-                    let txtRole = tdRole.textContent || tdRole.innerText;
-
-                    if (txtId.toUpperCase().indexOf(filter) > -1 || txtName.toUpperCase().indexOf(filter) > -1 || txtRole.toUpperCase().indexOf(filter) > -1) {
-                      tr[i].style.display = "";
-                      tr[i].classList.add("highlight");
-                    } else {
-                      tr[i].style.display = "none";
-                      tr[i].classList.remove("highlight");
-                    }
-                  }
-                }
-              }
 
               // Handle edit form submission
               editForm.addEventListener('submit', function (event) {

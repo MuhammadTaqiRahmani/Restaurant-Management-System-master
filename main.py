@@ -419,13 +419,4 @@ def update_order_item(menu_item_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-
-
-
-
-
-
-
-
-
 app.run(debug=True,host="0.0.0.0")
