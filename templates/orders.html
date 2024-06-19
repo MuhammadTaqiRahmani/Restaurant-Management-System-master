@@ -89,24 +89,37 @@
             }
             
             function searchTable() {
-              var input, filter, table, tr, td, i, txtValue;
+              var input, filter, table, tr, i;
               input = document.getElementById("searchInput");
               filter = input.value.toUpperCase();
               table = document.querySelector(".table");
               tr = table.getElementsByTagName("tr");
 
               for (i = 0; i < tr.length; i++) {
-                td = tr[i].getElementsByTagName("td")[0];
-                if (td) {
-                  txtValue = td.textContent || td.innerText;
-                  if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                let tdId = tr[i].getElementsByTagName("td")[0];
+                let tdCustomerStatusId = tr[i].getElementsByTagName("td")[1];
+                let tdBill = tr[i].getElementsByTagName("td")[2];
+
+                if (tdId || tdCustomerStatusId || tdBill) {
+                  let txtId = tdId.textContent || tdId.innerText;
+                  let txtCustomerStatusId = tdCustomerStatusId.textContent || tdCustomerStatusId.innerText;
+                  let txtBill = tdBill.textContent || tdBill.innerText;
+
+                  if (
+                    txtId.toUpperCase().indexOf(filter) > -1 ||
+                    txtCustomerStatusId.toUpperCase().indexOf(filter) > -1 ||
+                    txtBill.toUpperCase().indexOf(filter) > -1
+                  ) {
                     tr[i].style.display = "";
+                    tr[i].classList.add("highlight");
                   } else {
                     tr[i].style.display = "none";
+                    tr[i].classList.remove("highlight");
                   }
                 }
               }
             }
+          </script>
           </script>
 
 {% endblock %}

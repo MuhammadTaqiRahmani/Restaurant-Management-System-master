@@ -87,17 +87,55 @@
     </div>
 
   </div>
-  <script>
-    let popup = document.getElementById("popup");
+      <script>
+        let popup = document.getElementById("popup");
 
-    function openPopup() {
-      popup.classList.add("open-popup");
-    }
+        function openPopup() {
+          popup.classList.add("open-popup");
+        }
 
-    function closePopup() {
-      popup.classList.remove("open-popup");
-    }
-  </script>
+        function closePopup() {
+          popup.classList.remove("open-popup");
+        }
+        function searchTable() {
+          var input, filter, table, tr, i;
+          input = document.getElementById("searchInput");
+          filter = input.value.toUpperCase();
+          table = document.querySelector(".table");
+          tr = table.getElementsByTagName("tr");
+      
+          for (i = 0; i < tr.length; i++) {
+            let tdId = tr[i].getElementsByTagName("td")[0];
+            let tdName = tr[i].getElementsByTagName("td")[1];
+            let tdQuantity = tr[i].getElementsByTagName("td")[2];
+            let tdPrice = tr[i].getElementsByTagName("td")[3];
+            let tdTotalPrice = tr[i].getElementsByTagName("td")[4];
+      
+            if (tdId || tdName || tdQuantity || tdPrice || tdTotalPrice) {
+              let txtId = tdId.textContent || tdId.innerText;
+              let txtName = tdName.textContent || tdName.innerText;
+              let txtQuantity = tdQuantity.textContent || tdQuantity.innerText;
+              let txtPrice = tdPrice.textContent || tdPrice.innerText;
+              let txtTotalPrice = tdTotalPrice.textContent || tdTotalPrice.innerText;
+      
+              if (
+                txtId.toUpperCase().indexOf(filter) > -1 ||
+                txtName.toUpperCase().indexOf(filter) > -1 ||
+                txtQuantity.toUpperCase().indexOf(filter) > -1 ||
+                txtPrice.toUpperCase().indexOf(filter) > -1 ||
+                txtTotalPrice.toUpperCase().indexOf(filter) > -1
+              ) {
+                tr[i].style.display = "";
+                tr[i].classList.add("highlight");
+              } else {
+                tr[i].style.display = "none";
+                tr[i].classList.remove("highlight");
+              }
+            }
+          }
+        }
+        
+      </script>
 
 
   {% endblock %}
