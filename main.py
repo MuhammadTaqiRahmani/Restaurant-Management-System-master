@@ -372,6 +372,21 @@ def order_info(order_id):
     print(f"Orders Data: {orders_data}")
     return render_template("orderinfo.html", order_id=order_id, orders_data=orders_data)
 
+@app.route("/orderinfo/delete/<int:menu_item_id>", methods=['POST'])
+def delete_order_item(menu_item_id):
+    try:
+        with session_scope() as db_session:
+            order_item = db_session.query(OrderItem).filter(OrderItem.menu_item_id == menu_item_id).first()
+            if order_item:
+                db_session.delete(order_item)
+                db_session.commit()
+                return jsonify({'status': 'success', 'message': 'Order item deleted successfully'})
+            else:
+                return jsonify({'status': 'error', 'message': 'Order item not found'}), 404
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 
 
 
