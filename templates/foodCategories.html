@@ -133,34 +133,6 @@
               }
             }
 
-            // Search function
-            function searchTable() {
-              var input, filter, table, tr, i;
-              input = document.getElementById("searchInput");
-              filter = input.value.toUpperCase();
-              table = document.querySelector(".table");
-              tr = table.getElementsByTagName("tr");
-
-              for (i = 0; i < tr.length; i++) {
-                let tdId = tr[i].getElementsByTagName("td")[0];
-                let tdCategory = tr[i].getElementsByTagName("td")[1];
-
-                if (tdId || tdCategory) {
-                  let txtId = tdId.textContent || tdId.innerText;
-                  let txtCategory = tdCategory.textContent || tdCategory.innerText;
-
-                  if (txtId.toUpperCase().indexOf(filter) > -1 || txtCategory.toUpperCase().indexOf(filter) > -1) {
-                    tr[i].style.display = "";
-                    tr[i].classList.add("highlight");
-                  } else {
-                    tr[i].style.display = "none";
-                    tr[i].classList.remove("highlight");
-                  }
-                }
-              }
-            }
-
-
 
             // Handle form submission for edit form
             editForm.addEventListener('submit', function(event) {
@@ -190,6 +162,8 @@
               })
               .catch(error => console.error('Error:', error));
             });
+
+
           </script>
 
 {% endblock %}

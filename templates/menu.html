@@ -246,45 +246,6 @@
             };
             
 
-            function searchTable() {
-              var input, filter, table, tr, i;
-              input = document.getElementById("searchInput");
-              filter = input.value.toUpperCase();
-              table = document.querySelector(".table");
-              tr = table.getElementsByTagName("tr");
-            
-              for (i = 0; i < tr.length; i++) {
-                let tdId = tr[i].getElementsByTagName("td")[0];
-                let tdItem = tr[i].getElementsByTagName("td")[1];
-                let tdPrice = tr[i].getElementsByTagName("td")[2];
-                let tdCategory = tr[i].getElementsByTagName("td")[3];
-                let tdStatus = tr[i].getElementsByTagName("td")[4];
-            
-                if (tdId || tdItem || tdPrice || tdCategory || tdStatus) {
-                  let txtId = tdId.textContent || tdId.innerText;
-                  let txtItem = tdItem.textContent || tdItem.innerText;
-                  let txtPrice = tdPrice.textContent || tdPrice.innerText;
-                  let txtCategory = tdCategory.textContent || tdCategory.innerText;
-                  let txtStatus = tdStatus.textContent || tdStatus.innerText;
-            
-                  if (
-                    txtId.toUpperCase().indexOf(filter) > -1 ||
-                    txtItem.toUpperCase().indexOf(filter) > -1 ||
-                    txtPrice.toUpperCase().indexOf(filter) > -1 ||
-                    txtCategory.toUpperCase().indexOf(filter) > -1 ||
-                    txtStatus.toUpperCase().indexOf(filter) > -1
-                  ) {
-                    tr[i].style.display = "";
-                    tr[i].classList.add("highlight");
-                  } else {
-                    tr[i].style.display = "none";
-                    tr[i].classList.remove("highlight");
-                  }
-                }
-              }
-            }
-            
-
           </script>
 
 

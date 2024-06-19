@@ -91,37 +91,6 @@
               window.location.href = `/orderinfo/${orderId}`;
             }
             
-            function searchTable() {
-              var input, filter, table, tr, i;
-              input = document.getElementById("searchInput");
-              filter = input.value.toUpperCase();
-              table = document.querySelector(".table");
-              tr = table.getElementsByTagName("tr");
-
-              for (i = 0; i < tr.length; i++) {
-                let tdId = tr[i].getElementsByTagName("td")[0];
-                let tdCustomerStatusId = tr[i].getElementsByTagName("td")[1];
-                let tdBill = tr[i].getElementsByTagName("td")[2];
-
-                if (tdId || tdCustomerStatusId || tdBill) {
-                  let txtId = tdId.textContent || tdId.innerText;
-                  let txtCustomerStatusId = tdCustomerStatusId.textContent || tdCustomerStatusId.innerText;
-                  let txtBill = tdBill.textContent || tdBill.innerText;
-
-                  if (
-                    txtId.toUpperCase().indexOf(filter) > -1 ||
-                    txtCustomerStatusId.toUpperCase().indexOf(filter) > -1 ||
-                    txtBill.toUpperCase().indexOf(filter) > -1
-                  ) {
-                    tr[i].style.display = "";
-                    tr[i].classList.add("highlight");
-                  } else {
-                    tr[i].style.display = "none";
-                    tr[i].classList.remove("highlight");
-                  }
-                }
-              }
-            }
 
             function deleteOrder(event, orderId) {
               event.stopPropagation(); // Prevent the row click event from triggering
