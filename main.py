@@ -232,22 +232,31 @@ def status():
         table_no = request.form.get('table_no')
 
         with session_scope() as db_session:
-            entry = Status(floor=floor, category=category, customer=customer, table_no=table_no)
-            db_session.add(entry)
-        return redirect(url_for('status'))
+            # Calculate current occupied tables on the selected floor
+            occupied_tables = db_session.query(Status).filter(Status.floor == floor).count()
+            
+            # Check if adding another table exceeds the capacity (15 tables per floor)
+            if occupied_tables >= 15:
+                flash('Floor has no capacity', 'error')
+            else:
+                entry = Status(floor=floor, category=category, customer=customer, table_no=table_no)
+                db_session.add(entry)
 
+        # Redirect to the status page after processing the form
+        return redirect('/status')
+
+    # If it's a GET request, render the status template with current data
     with session_scope() as db_session:
         statuses = db_session.query(Status).order_by(Status.s_no.asc()).all()
         statuses = [status.to_list() for status in statuses]
-        
+    
     floor_status = {
         'Ground Floor': sum(1 for status in statuses if status[1] == 'Ground Floor'),
         '1st Floor': sum(1 for status in statuses if status[1] == '1st Floor'),
         '2nd Floor': sum(1 for status in statuses if status[1] == '2nd Floor')
     }
-    
-    return render_template("status.html", statuses=statuses, floor_status=floor_status)
 
+    return render_template("status.html", statuses=statuses, floor_status=floor_status)
 
 
 @app.route("/status/delete/<int:id>", methods=['POST'])
@@ -261,7 +270,8 @@ def delete_status(id):
         else:
             return jsonify({'status': 'error', 'message': 'Status not found'}), 404
 
-
+        
+        
 @app.route("/status/update/<int:id>", methods=['POST'])
 def update_status(id):
     floor = request.form.get('edit_floor')
@@ -272,6 +282,16 @@ def update_status(id):
     with session_scope() as db_session:
         status = db_session.query(Status).filter(Status.s_no == id).first()
         if status:
+            current_floor = status.floor
+            
+            # Calculate current occupied tables on the selected floor
+            occupied_tables = db_session.query(Status).filter(Status.floor == floor).count()
+            
+            # Check if updating to another floor exceeds the capacity (15 tables per floor)
+            if floor != current_floor and occupied_tables >= 15:
+                return jsonify({'status': 'error', 'message': 'Floor has no capacity'}), 400
+            
+            # Update the status if capacity allows
             status.floor = floor
             status.category = category
             status.customer = customer
@@ -287,7 +307,8 @@ def update_status(id):
             return jsonify({'status': 'success', 'message': 'Status updated successfully', 'item': updated_status})
         else:
             return jsonify({'status': 'error', 'message': 'Status not found'}), 404
-        
+
+
 @app.route("/orders", methods=['GET', 'POST'])
 def orders():
     if request.method == 'POST':

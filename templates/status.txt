@@ -1,0 +1,11 @@
+function openPopup() {
+    const selectedFloor = document.getElementById('select').value;
+    const floorCells = document.querySelectorAll(`td[data-floor="${selectedFloor}"]`);
+
+    // Check if selected floor is fully booked (i.e., all tables are filled)
+    if (floorCells.length >= 3) {
+        alert("Floor has no capacity. All tables are booked.");
+    } else {
+        popup.classList.add("open-popup");
+    }
+}

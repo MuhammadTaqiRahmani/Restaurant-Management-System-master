@@ -1,0 +1,167 @@
+# @app.route("/status", methods=['GET', 'POST'])
+# def status():
+#     if request.method == 'POST':
+#         floor = request.form.get('floor')
+#         category = request.form.get('category')
+#         customer = int(request.form.get('customer'))
+#         table_no = request.form.get('table_no')
+
+#         with session_scope() as db_session:
+#             entry = Status(floor=floor, category=category, customer=customer, table_no=table_no)
+#             db_session.add(entry)
+#         return redirect(url_for('status'))
+
+#     with session_scope() as db_session:
+#         statuses = db_session.query(Status).order_by(Status.s_no.asc()).all()
+#         statuses = [status.to_list() for status in statuses]
+        
+#     floor_status = {
+#         'Ground Floor': sum(1 for status in statuses if status[1] == 'Ground Floor'),
+#         '1st Floor': sum(1 for status in statuses if status[1] == '1st Floor'),
+#         '2nd Floor': sum(1 for status in statuses if status[1] == '2nd Floor')
+#     }
+    
+#     return render_template("status.html", statuses=statuses, floor_status=floor_status)
+
+
+
+
+
+
+
+
+
+
+# latest-----
+# @app.route("/status", methods=['GET', 'POST'])
+# def status():
+#     if request.method == 'POST':
+#         floor = request.form.get('floor')
+#         category = request.form.get('category')
+#         customer = int(request.form.get('customer'))
+#         table_no = request.form.get('table_no')
+
+#         with session_scope() as db_session:
+#             # Calculate current occupied tables on the selected floor
+#             occupied_tables = sum(1 for status in db_session.query(Status).filter(Status.floor == floor))
+            
+#             # Check if adding another table exceeds the capacity (3 tables per floor)
+#             if occupied_tables >= 3:
+#                 flash('Floor has no capacity', 'error')
+#             else:
+#                 entry = Status(floor=floor, category=category, customer=customer, table_no=table_no)
+#                 db_session.add(entry)
+                
+
+#         # Redirect to the status page after processing the form
+#         return redirect(url_for('status'))
+
+#     # If it's a GET request, render the status template with current data
+#     with session_scope() as db_session:
+#         statuses = db_session.query(Status).order_by(Status.s_no.asc()).all()
+#         statuses = [status.to_list() for status in statuses]
+        
+#     floor_status = {
+#         'Ground Floor': sum(1 for status in statuses if status[1] == 'Ground Floor'),
+#         '1st Floor': sum(1 for status in statuses if status[1] == '1st Floor'),
+#         '2nd Floor': sum(1 for status in statuses if status[1] == '2nd Floor')
+#     }
+
+#     return render_template("status.html", statuses=statuses, floor_status=floor_status)
+
+
+
+
+
+LOCAL LOCAL LOCAL
+# @app.route("/status", methods=['GET', 'POST'])
+# def status():
+#     if request.method == 'POST':
+#         floor = request.form.get('floor')
+#         category = request.form.get('category')
+#         customer = int(request.form.get('customer'))
+#         table_no = request.form.get('table_no')
+
+#         with session_scope() as db_session:
+#             count = db_session.query(Status).filter(Status.floor == floor).count()
+#             if count >= 3:
+#                 return jsonify({'status': 'error', 'message': 'Floor has no capacity. All tables are booked.'}), 400
+
+#             entry = Status(floor=floor, category=category, customer=customer, table_no=table_no)
+#             db_session.add(entry)
+        
+#         return redirect(url_for('status'))
+
+#     with session_scope() as db_session:
+#         statuses = db_session.query(Status).order_by(Status.s_no.asc()).all()
+#         statuses = [status.to_list() for status in statuses]
+        
+#     floor_status = {
+#         'Ground Floor': sum(1 for status in statuses if status[1] == 'Ground Floor'),
+#         '1st Floor': sum(1 for status in statuses if status[1] == '1st Floor'),
+#         '2nd Floor': sum(1 for status in statuses if status[1] == '2nd Floor')
+#     }
+    
+#     return render_template("status.html", statuses=statuses, floor_status=floor_status)
+
+
+
+
+# @app.route("/status", methods=['GET', 'POST'])
+# def status():
+#     if request.method == 'POST':
+#         floor = request.form.get('floor')
+#         category = request.form.get('category')
+#         customer = int(request.form.get('customer'))
+#         table_no = request.form.get('table_no')
+
+#         with session_scope() as db_session:
+#             count = db_session.query(Status).filter(Status.floor == floor).count()
+#             if count >= 3:
+#                 return jsonify({'status': 'error', 'message': 'Floor has no capacity. All tables are booked.'}), 400
+
+#             entry = Status(floor=floor, category=category, customer=customer, table_no=table_no)
+#             db_session.add(entry)
+        
+#         return redirect(url_for('status'))
+
+#     with session_scope() as db_session:
+#         statuses = db_session.query(Status).order_by(Status.s_no.asc()).all()
+#         statuses = [status.to_list() for status in statuses]
+        
+#     floor_status = {
+#         'Ground Floor': sum(1 for status in statuses if status[1] == 'Ground Floor'),
+#         '1st Floor': sum(1 for status in statuses if status[1] == '1st Floor'),
+#         '2nd Floor': sum(1 for status in statuses if status[1] == '2nd Floor')
+#     }
+    
+#     return render_template("status.html", statuses=statuses, floor_status=floor_status)
+
+
+
+FOR UPDATE
+# @app.route("/status/update/<int:id>", methods=['POST'])
+# def update_status(id):
+#     floor = request.form.get('edit_floor')
+#     category = request.form.get('edit_category')
+#     customer = request.form.get('edit_customer')
+#     table_no = request.form.get('edit_table_no')
+
+#     with session_scope() as db_session:
+#         status = db_session.query(Status).filter(Status.s_no == id).first()
+#         if status:
+#             status.floor = floor
+#             status.category = category
+#             status.customer = customer
+#             status.table_no = table_no
+#             db_session.add(status)
+#             updated_status = {
+#                 "s_no": status.s_no,
+#                 "floor": status.floor,
+#                 "category": status.category,
+#                 "customer": status.customer,
+#                 "table_no": status.table_no
+#             }
+#             return jsonify({'status': 'success', 'message': 'Status updated successfully', 'item': updated_status})
+#         else:
+#             return jsonify({'status': 'error', 'message': 'Status not found'}), 404

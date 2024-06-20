@@ -127,7 +127,7 @@
                       {% for status in statuses %}
                       {% set floor = status[1] %}
                       {% set booked_tables = floor_status[floor] %}
-                      {% set badge_class = 'badge-success' if booked_tables < 3 else 'badge-danger' %}
+                      {% set badge_class = 'badge-success' if booked_tables < 15 else 'badge-danger' %}
                       <tr data-status-id="{{ status[0] }}" data-floor="{{ floor }}">
                         <td>{{ status[0] }}</td>
                         <td class="{{ badge_class }}" data-floor="{{ floor }}">{{ floor }}</td>
@@ -218,7 +218,7 @@
             event.preventDefault();
             let formData = new FormData(editForm);
             let itemId = editItemIdField.value;
-
+        
             // Get the old floor value before the update
             const oldFloor = document.querySelector(`tr[data-status-id='${itemId}']`).getAttribute('data-floor');
             
@@ -226,27 +226,32 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update status');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.status === 'success') {
                     alert(data.message);
                     // Update the table row with new data
                     let row = document.querySelector(`tr[data-status-id='${itemId}']`);
                     const newFloor = data.item.floor;
-
+        
                     row.children[1].textContent = newFloor;  // Update floor
                     row.children[1].setAttribute('data-floor', newFloor); // Update floor attribute
                     row.children[2].textContent = data.item.category;  // Update category
                     row.children[3].textContent = data.item.customer;  // Update customer
                     row.children[4].textContent = data.item.table_no;  // Update table number
                     row.setAttribute('data-floor', newFloor); // Update floor attribute of the row
-
+        
                     // Call updateFloorStatus twice to handle both old and new floor status
                     updateFloorStatus();
-
+        
                     closeEditPopup(); // Close the popup after successful update
                 } else {
-                    alert('Failed to update the status');
+                    alert(data.message); // Display error message
                 }
             })
             .catch(error => {
@@ -254,6 +259,7 @@
                 alert('Failed to update the status');
             });
         };
+        
 
         function updateFloorStatus() {
           const floorRows = document.querySelectorAll(`tr[data-status-id]`);
@@ -271,7 +277,7 @@
           floorRows.forEach(row => {
             const floor = row.getAttribute('data-floor');
             const floorCell = row.querySelector('td[data-floor]');
-            if (floorStatus[floor] < 3) {
+            if (floorStatus[floor] < 15) {
               floorCell.classList.remove('badge-danger');
               floorCell.classList.add('badge-success');
             } else {
@@ -280,7 +286,13 @@
             }
           });
         }
-        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          alert("{{ message }}");
+        {% endfor %}
+      {% endwith %}
+
+
         </script>
         
 
