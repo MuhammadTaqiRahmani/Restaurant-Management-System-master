@@ -230,16 +230,23 @@ def status():
         category = request.form.get('category')
         customer = int(request.form.get('customer'))
         table_no = request.form.get('table_no')
-        
+
         with session_scope() as db_session:
-            entry = Status(floor=floor,category=category ,customer=customer,table_no=table_no)
+            entry = Status(floor=floor, category=category, customer=customer, table_no=table_no)
             db_session.add(entry)
+        return redirect(url_for('status'))
 
     with session_scope() as db_session:
         statuses = db_session.query(Status).order_by(Status.s_no.asc()).all()
         statuses = [status.to_list() for status in statuses]
         
-    return render_template("status.html", statuses=statuses)
+    floor_status = {
+        'Ground Floor': sum(1 for status in statuses if status[1] == 'Ground Floor'),
+        '1st Floor': sum(1 for status in statuses if status[1] == '1st Floor'),
+        '2nd Floor': sum(1 for status in statuses if status[1] == '2nd Floor')
+    }
+    
+    return render_template("status.html", statuses=statuses, floor_status=floor_status)
 
 
 
