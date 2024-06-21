@@ -32,6 +32,19 @@ def table():
 def management():
     return render_template("Managementib.html")
 
+@app.route("/months")
+def months():
+    return render_template("days.html")
+
+@app.route("/years")
+def years():
+    return render_template("months.html")
+
+@app.route("/bill")
+def bill():
+    return render_template("bill.html")
+
+
 @app.route("/roles", methods=['GET', 'POST'])
 def roles():
     if request.method == 'POST':

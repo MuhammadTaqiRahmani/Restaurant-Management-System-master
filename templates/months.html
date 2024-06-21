@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<link rel="stylesheet" href="static/css/vertical-layout-light/roles.css">
+<link rel="stylesheet" href="static/css/vertical-layout-light/days.css">
+<div class="main-panel">
+  <div class="content-wrapper">
+    <div class="row">
+      <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <div class="card">
+              <div class="card-body">
+                <h4 class="card-title">Yearly sales</h4>
+                <p class="card-description" id="for-marginbottom">This <code>Record</code> is generating on the basis of previous record of <code>Monthly sales.</code> </p>
+                <!-- <p class="card-description">Tables in each Floor <code>15</code>, Total tables <code>45</code>, <code>5</code> for 2 person, <code>5</code> for 4 person, <code>5</code> for 8 person</p> -->
+
+                <div class="container-temp">
+
+
+                <!--  <div class="card-body" id="for-padding">
+                    <p class="card-description" id="forSearch"><code id="search1">Search</code></p>
+                    <div class="template-demo">
+                      <div class="input-group mb-2 mr-sm-2">
+                        <div class="input-group-prepend">
+                          <div class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></div>
+                        </div>
+                        <input type="text" class="form-control" id="searchInput" onkeyup="searchTable()" placeholder="Search here">
+                      </div>
+                    </div>
+                  </div>
+                </div> -->
+
+                
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Month</th>
+                        <th>Sale</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+
+
+{% endblock %}
