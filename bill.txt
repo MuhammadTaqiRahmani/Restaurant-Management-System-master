@@ -1,0 +1,12 @@
+# @app.route("/bill")
+# def bill():
+#     from models import Order, Bill
+
+#     with session_scope() as db_session:
+#         # Query to aggregate bills by customer_status_id
+#         customer_bills = db_session.query(
+#             Order.customer_status_id,
+#             func.sum(Bill.total).label('total_bill')
+#         ).join(Bill).group_by(Order.customer_status_id).all()
+        
+#     return render_template("bill.html", customer_bills=customer_bills)

@@ -86,3 +86,6 @@ class Bill(Base):
     def calculate_total(self):
         self.total = sum(item.menu_item.price * item.quantity for item in self.order.items)
         return self.total
+    
+
+    

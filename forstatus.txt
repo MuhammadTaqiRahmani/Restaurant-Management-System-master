@@ -171,3 +171,16 @@ FOR UPDATE
 
 
 dashboard.js-221 line no
+
+
+      <link rel="stylesheet" href="static\css\vertical-layout-light\clock.css">
+      <script src="{{ url_for('static', filename='js/CLOCK.js') }}"></script>
+
+
+                          <div class="wrapper">
+                      <div class="display">
+                      <div id="time"></div>
+                      </div>
+                      <span></span>
+                      <span></span>
+                      </div>

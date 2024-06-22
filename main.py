@@ -1,8 +1,12 @@
 import os
-from flask import Flask, flash, redirect,render_template,request, jsonify, url_for
+from flask import Flask, flash, redirect,render_template,request, jsonify, session, url_for
 from sqlalchemy.orm import sessionmaker, joinedload, aliased
 from models import OrderItem, Roles, Employees, Category, Menu, Status, Order
 from database import engine, session_scope, recreate_database
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy import func
+from models import Bill
 
 app = Flask(__name__)
 app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
@@ -40,9 +44,32 @@ def months():
 def years():
     return render_template("months.html")
 
+
 @app.route("/bill")
 def bill():
-    return render_template("bill.html")
+    with session_scope() as db_session:
+        # Query to get unique customer_status_id
+        customer_status_ids = db_session.query(Order.customer_status_id).distinct().all()
+        
+        # Compute total bill for each customer_status_id
+        customer_bills = db_session.query(
+            Order.customer_status_id,
+            func.sum(OrderItem.quantity * Menu.price).label('total_bill')
+        ).join(OrderItem, Order.id == OrderItem.order_id)\
+         .join(Menu, Menu.s_no == OrderItem.menu_item_id)\
+         .group_by(Order.customer_status_id).all()
+
+    # Convert the results to dictionaries for easier template rendering
+    customer_status_ids_dict = {cid[0]: 0 for cid in customer_status_ids}
+    customer_bills_dict = {cb[0]: cb[1] for cb in customer_bills}
+
+    # Merge the two dictionaries, ensuring every customer_status_id is included
+    for cid in customer_status_ids_dict:
+        if cid in customer_bills_dict:
+            customer_status_ids_dict[cid] = customer_bills_dict[cid]
+
+    return render_template("bill.html", customer_status_ids_dict=customer_status_ids_dict)
+
 
 
 @app.route("/roles", methods=['GET', 'POST'])

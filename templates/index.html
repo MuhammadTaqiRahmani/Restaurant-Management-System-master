@@ -1,6 +1,8 @@
 {% extends "layout.html" %}
 {% block body %}
       <!-- partial -->
+       <!--<link rel="stylesheet" href="static\css\vertical-layout-light\clock.css">
+      <script src="{{ url_for('static', filename='js/CLOCK.js') }}"></script> -->
       <div class="main-panel">
         <div class="content-wrapper">
           <div class="row">
@@ -72,9 +74,13 @@
                 <div class="col-md-6 mb-4 mb-lg-0 stretch-card transparent">
                   <div class="card card-light-blue">
                     <div class="card-body">
-                      <p class="mb-4">Number of Meetings</p>
-                      <p class="fs-30 mb-2">34040</p>
-                      <p>2.00% (30 days)</p>
+                    <div class="wrapper">
+                      <div class="display">
+                      <div class="fs-30 mb-2" id="time"></div>
+                      </div>
+                      <span></span>
+                      <span></span>
+                      </div>
                     </div>
                   </div>
                 </div>

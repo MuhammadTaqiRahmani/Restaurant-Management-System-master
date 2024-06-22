@@ -1,0 +1,25 @@
+
+
+    .display #time{
+    z-index: 100000;
+    line-height: 35px;
+    color: #ffffff;
+    font-size: 35px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    -webkit-background-clip: text;
+    animation: animate 1.5s linear infinite;
+    }
+    @keyframes animate {
+    100% {
+    filter: hue-rotate (360deg);
+    }
+    }
+
+
+    .card {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+      }
