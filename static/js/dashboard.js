@@ -218,7 +218,7 @@
               ticks: {
                 display: true,
                 min: 0,
-                max: 110000,
+                max: 560,
                 callback: function(value, index, values) {
                   return  value ;
                 },

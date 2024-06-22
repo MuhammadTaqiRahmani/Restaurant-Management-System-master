@@ -221,3 +221,13 @@
 .forhover{
     cursor: pointer;
 }
+
+.fix{
+    margin-top: 0;
+}
+#text3{
+    margin-left: 5px;
+    color: #4B49AC;
+    font-size: 15px;
+    margin-top: 0px;
+}

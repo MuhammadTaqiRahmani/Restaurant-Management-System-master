@@ -7,11 +7,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy import func
 from models import Bill
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
 app.secret_key = 'Anti_Minsh'
-#recreate_database()
+# recreate_database()
 
 # creating routes
 @app.route("/")
@@ -153,14 +154,19 @@ def update_employee(employee_id):
                 db_session.add(employee)
     return jsonify({'status': 'success', 'message': 'Employee updated successfully'})
 
+
 @app.route("/categories", methods=['GET', 'POST'])
 def categories():
     if request.method == 'POST':
         cat = request.form.get('cat')
         entry = Category(cat=cat)
 
-        with session_scope() as db_session:
-            db_session.add(entry)
+        try:
+            with session_scope() as db_session:
+                db_session.add(entry)
+                db_session.commit()
+        except IntegrityError:
+            flash('Category should be unique', 'error')
 
     with session_scope() as db_session:
         cats = db_session.query(Category).order_by(Category.s_no.asc()).all()
@@ -176,16 +182,24 @@ def delete_category(cat_id):
             db_session.delete(category)
     return jsonify({'status': 'success', 'message': 'Category deleted successfully'})
 
+
 @app.route("/categories/update/<int:cat_id>", methods=['POST'])
 def update_category(cat_id):
     cat_name = request.form.get('edit_cat')
     with session_scope() as db_session:
+        # Check if the category name already exists
+        existing_category = db_session.query(Category).filter(Category.cat == cat_name).first()
+        if existing_category:
+            return jsonify({'status': 'error', 'message': 'Category has been already saved'})
+
+        # Update the category if no duplicate is found
         category = db_session.query(Category).filter(Category.s_no == cat_id).first()
         if category:
             category.cat = cat_name
             db_session.add(category)
-    return jsonify({'status': 'success', 'message': 'Category updated successfully'})
-
+            db_session.commit()
+            return jsonify({'status': 'success', 'message': 'Category updated successfully'})
+        return jsonify({'status': 'error', 'message': 'Category not found'})
 
 @app.route("/menu", methods=['GET', 'POST'])
 def menu():
