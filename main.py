@@ -312,6 +312,46 @@ def status():
 
     return render_template("status.html", statuses=statuses, floor_status=floor_status)
 
+# @app.route("/status", methods=['GET', 'POST'])
+# def status():
+#     if request.method == 'POST':
+#         floor = request.form.get('floor')
+#         category = request.form.get('category')
+#         customer = request.form.get('customer')
+#         table_no = request.form.get('table_no')
+
+
+
+#         with session_scope() as db_session:
+#             # Calculate current occupied tables on the selected floor
+#             occupied_tables = db_session.query(Status).filter(Status.floor == floor).count()
+            
+#             # Check if adding another table exceeds the capacity (15 tables per floor)
+#             if occupied_tables >= 15:
+#                 flash('Floor has no capacity', 'error')
+#             else:
+#                 entry = Status(floor=floor, category=category, customer=customer, table_no=table_no)
+#                 db_session.add(entry)
+
+#         # Redirect to the status page after processing the form
+#         return redirect('/status')
+
+#     # If it's a GET request, render the status template with current data
+#     with session_scope() as db_session:
+#         statuses = db_session.query(Status).order_by(Status.s_no.asc()).all()
+#         statuses = [status.to_list() for status in statuses]
+    
+#     floor_status = {
+#         'Ground Floor': sum(1 for status in statuses if status[1] == 'Ground Floor'),
+#         '1st Floor': sum(1 for status in statuses if status[1] == '1st Floor'),
+#         '2nd Floor': sum(1 for status in statuses if status[1] == '2nd Floor')
+#     }
+
+#     return render_template("status.html", statuses=statuses, floor_status=floor_status)
+
+
+
+
 
 @app.route("/status/delete/<int:id>", methods=['POST'])
 def delete_status(id):

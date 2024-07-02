@@ -48,7 +48,7 @@
                         <input type="number" class="form-control" id="customerInput" placeholder="Add Table" name="table_no">
                         
                         <div id="buttons">
-                          <button type="submit" class="btn btn-primary mr-2">Save</button>
+                          <button type="submit" class="btn btn-primary mr-2" onclick="return validateStatusForm()">Save</button>
                           <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
                         </div>
                       </div>
@@ -292,6 +292,18 @@
         {% endfor %}
       {% endwith %}
 
+      function validateStatusForm() {
+        let customer = document.getElementById('customerInput').value.trim();
+        let tableNo = document.getElementById('tableInput').value.trim();
+        
+        if (customer === '' || tableNo === '') {
+            alert('Please enter Customer and Table No.');
+            return false; // Prevent form submission
+        }
+        
+        return true; // Proceed with form submission
+    }
+    
 
         </script>
         

@@ -37,7 +37,7 @@
 
 
                                   <div id="buttons">
-                                      <button type="submit" class="btn btn-primary mr-2">Save</button>
+                                      <button type="submit" class="btn btn-primary mr-2" onclick="return validateForm()">Save</button>
                                       <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
                                   </div>
                               </div>
@@ -196,6 +196,23 @@
                 })
                 .catch(error => console.error('Error:', error));
               });
+
+              function validateForm() {
+                let floor = document.getElementById('floor').value.trim();
+                let customer = document.getElementById('customer').value.trim();
+                let table_no = document.getElementById('table_no').value.trim();
+                
+                if (customer === '' || table_no === '') {
+                    alert('Please enter both Customer and Table No.');
+                    return false; // Prevent form submission
+                }
+                
+                // Optionally, you can check other fields like floor and category here if needed
+                
+                return true; // Proceed with form submission
+            }
+            
+            
             </script>
             
 

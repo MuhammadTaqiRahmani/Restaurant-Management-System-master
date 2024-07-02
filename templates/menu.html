@@ -46,7 +46,7 @@
                           </span>
 
                               <div id="buttons">
-                                <button type="submit" class="btn btn-primary mr-2">Save</button>
+                                <button type="submit" class="btn btn-primary mr-2" onclick="validateForm()">Save</button>
                                 <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
                               </div>
 
@@ -245,6 +245,17 @@
               });
             };
             
+
+            function validateForm() {
+              let itemInput = document.getElementById('itemInput').value.trim();
+              let priceInput = document.getElementById('priceInput').value.trim();
+          
+              if (itemInput === '' || priceInput === '') {
+                  alert('Please enter item and price.'); // Modify this to display your desired message format
+                  event.preventDefault(); // Prevent form submission if validation fails
+              }
+          }
+          
 
           </script>
 

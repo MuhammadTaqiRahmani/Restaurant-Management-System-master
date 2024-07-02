@@ -23,7 +23,7 @@
                         <label for="exampleInputUsername1" id="text">Categories</label>
                         <input type="text" class="form-control" id="exampleInputUsername1" placeholder="Add Categories" name='cat'>
                         <div id="buttons">
-                          <button type="submit" class="btn btn-primary mr-2">Save</button>
+                          <button type="submit" class="btn btn-primary mr-2" onclick="return validateCategoryForm()">Save</button>
                           <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
                         </div>
                       </div>
@@ -170,6 +170,19 @@
                 {% endfor %}
             {% endif %}
           {% endwith %}
+
+
+          function validateCategoryForm() {
+            let cat = document.getElementById('exampleInputUsername1').value.trim();
+            
+            if (cat === '') {
+                alert('Please enter the category name.');
+                return false; // Prevent form submission
+            }
+            
+            return true; // Proceed with form submission
+        }
+        
           </script>
 
 
