@@ -231,3 +231,13 @@
     font-size: 15px;
     margin-top: 0px;
 }
+
+.logo {
+    width: 230px; /* Adjust the width as needed */
+
+    
+}
+.navbar .navbar-brand-wrapper .navbar-brand img{
+    height: 98px;
+    margin-left: 10px;
+}

@@ -20,7 +20,7 @@
                   </div>
 
                   <div class="popup" id="popup">
-                    <form method="post" action="/orderinfo/{{ order_id }}">
+                    <form method="post" action="/orderinfo/{{ order_id }}" onsubmit="return checkItemAvailability(event)">
                       <div class="form-group">
                         <label for="menuItemInput" id="text2">Menu Item ID</label>
                         <input type="number" class="form-control" id="menuItemInput" placeholder="Enter Menu Item ID"
@@ -182,6 +182,26 @@
                 })
                 .catch(error => console.error('Error:', error));
               });
+
+
+              function checkItemAvailability(event) {
+                event.preventDefault();
+                const menuItemInput = document.getElementById('menuItemInput').value;
+          
+                fetch(`/menu/check_availability/${menuItemInput}`)
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data.status === 'available') {
+                      event.target.submit();
+                    } else {
+                      alert('This item is unavailable');
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to check item availability');
+                  });
+              }
               
       </script>
 
