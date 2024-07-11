@@ -1,25 +1,25 @@
 import base64
+from collections import defaultdict
+import datetime
 import io
 import os
 from flask import Flask, flash, redirect,render_template,request, jsonify, session, url_for
-from sqlalchemy.orm import sessionmaker, joinedload, aliased
+from sqlalchemy.orm import sessionmaker, joinedload
 from models import OrderItem, Roles, Employees, Category, Menu, Status, Order
 from database import engine, session_scope, recreate_database
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
 from sqlalchemy import func
 from models import Bill
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from sqlalchemy import extract
-from models import Bill
-from collections import defaultdict
-from datetime import datetime
 
 app = Flask(__name__)
 app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
 app.secret_key = 'Anti_Minsh'
 # recreate_database()
+
+
 
 @app.route("/")
 def index():
@@ -59,6 +59,8 @@ def index():
                            total_orders=total_orders,
                            total_customers=total_customers,
                            total_employees=total_employees)
+
+
 
 
 @app.route("/home")
@@ -512,6 +514,7 @@ def order_info(order_id):
             flash(f"An error occurred: {str(e)}", "error")
 
         return redirect(url_for('order_info', order_id=order_id))
+    
 
     orders_data = get_orders_data(order_id)
     print(f"Orders Data: {orders_data}")
@@ -549,6 +552,7 @@ def update_order_item(menu_item_id):
         return jsonify({'status': 'error', 'message': 'Invalid quantity format'}), 400
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
 
 
 app.run(debug=True,host="0.0.0.0")

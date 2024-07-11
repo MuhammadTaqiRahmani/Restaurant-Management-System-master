@@ -6,13 +6,12 @@
       <head>
         
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
           <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-          <style>
-            .card-body {
-                overflow: hidden;  /* Prevent overflow */
-            }
+          <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
       
+
             #areaChart {
                 width: 100% !important;  /* Ensure the chart width fits its container */
                 height: 510px !important;  /* Ensure the chart height fits its container */
@@ -25,6 +24,7 @@
           }
 
           </style>
+
 
         </head>
       <div class="main-panel">
@@ -128,6 +128,7 @@
             </div>
             <div class="col-md-6 grid-margin stretch-card">
               <div class="card">
+
                 <div class="card-body">
                  <div class="d-flex justify-content-between">
                   <p class="card-title">Sales Report</p>
@@ -136,103 +137,135 @@
                   <div id="sales-legend" class="chartjs-legend mt-4 mb-2"></div>
                   <canvas id="areaChart" class="chartjs-render-monitor"></canvas>
                 </div>
+
+                  <div class="card-body">
+                      <div class="d-flex justify-content-between">
+                          <p class="card-title">Sales Report</p>
+                          <a href="#" class="text-info">View all</a>
+                      </div>
+                      <p class="font-weight-500">The total number of sessions within the date range. It is the period time a user is actively engaged with your website, page or app, etc.</p>
+                      <div id="sales-legend" class="chartjs-legend mt-4 mb-2"></div>
+                      <canvas id="areaChart"></canvas>
+                  </div>
+
               </div>
-            </div>
           </div>
 
 
 
-
+        
         <script>
-          // Data for the pie chart
+          // Ensure the variables are properly passed and rendered
+          console.log("Labels:", {{ labels|tojson }});
+          console.log("Data:", {{ data|tojson }});
+          console.log("Area Chart Labels:", {{ area_chart_labels|tojson }});
+          console.log("Area Chart Data:", {{ area_chart_data|tojson }});
+  
+          // Pie chart data and options
           var salesData = {
-              labels: {{ labels|tojson }}, // Use the dynamic labels
+              labels: {{ labels|tojson }},
               datasets: [{
-                  data: {{ data|tojson }}, // Use the dynamic data
-                  backgroundColor: [
-                      '#FF6384',
-                      '#36A2EB',
-                      '#FFCE56',
-                      '#4BC0C0',
-                      '#9966FF'
-                  ],
+                  data: {{ data|tojson }},
+                  backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
               }]
           };
-      
-          // Options for the pie chart
+  
           var pieOptions = {
               responsive: true,
-              maintainAspectRatio: true // Change to true to maintain aspect ratio
+              maintainAspectRatio: true
           };
-      
-          // Get the context of the canvas element we want to select
+  
           var ctx = document.getElementById('pieChart').getContext('2d');
-      
-          // Create the pie chart
           new Chart(ctx, {
               type: 'pie',
               data: salesData,
               options: pieOptions
           });
+  
 
-
-
-
-
-
-
-
-        // Data and options for the area chart
-        var areaChartData = {
-          labels: {{ area_chart_labels|tojson }}, // Use the dynamic labels
-          datasets: [{
-              label: 'Profit',
-              data: {{ area_chart_data|tojson }}, // Use the dynamic data
-              backgroundColor: 'rgba(75, 192, 192, 0.2)',
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 1,
-              fill: true
-          }]
-      };
-
-      var areaChartOptions = {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-              xAxes: [{
-                  type: 'time',
-                  time: {
-                      unit: 'minute',  // Display labels as minutes
-                      tooltipFormat: 'll HH:mm',  // Format tooltips to show date and time
-                      displayFormats: {
-                          minute: 'HH:mm'  // Display format for minutes
+          
+          // Area chart data and options
+          var areaChartData = {
+              labels: {{ area_chart_labels|tojson }},
+              datasets: [{
+                  label: 'Earnings',
+                  data: {{ area_chart_data|tojson }},
+                  backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                  borderWidth: 1,
+                  fill: true
+              }]
+          };
+  
+          console.log("Area Chart Data:", areaChartData.datasets[0].data);
+          console.log("Area Chart Labels:", areaChartData.labels);
+  
+          var areaCtx = document.getElementById('areaChart').getContext('2d');
+  
+          // Create a gradient fill
+          var gradient = areaCtx.createLinearGradient(0, 0, 0, 400);
+          gradient.addColorStop(0, 'rgba(75, 192, 192, 0.5)');
+          gradient.addColorStop(1, 'rgba(75, 192, 192, 0.2)');
+          areaChartData.datasets[0].backgroundColor = gradient;
+  
+          var areaChartOptions = {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                  x: {
+                      type: 'time',
+                      time: {
+                          unit: 'day',
+                          tooltipFormat: 'll',
+                          displayFormats: {
+                              day: 'MMM D'
+                          }
+                      },
+                      grid: {
+                          display: true,
+                          color: 'rgba(200, 200, 200, 0.3)'
+                      },
+                      title: {
+                          display: true,
+                          text: 'Date'
                       }
                   },
-                  scaleLabel: {
-                      display: true,
-                      labelString: 'Time'
+                  y: {
+                      grid: {
+                          display: true,
+                          color: 'rgba(200, 200, 200, 0.3)'
+                      },
+                      title: {
+                          display: true,
+                          text: 'Earnings'
+                      },
+                      ticks: {
+                          beginAtZero: true,
+                          callback: function(value) {
+                              return '$' + value; // Adding dollar sign to y-axis labels
+                          }
+                      }
                   }
-              }],
-              yAxes: [{
-                  scaleLabel: {
+              },
+              plugins: {
+                  legend: {
                       display: true,
-                      labelString: 'Profit'
-                  },
-                  ticks: {
-                      beginAtZero: true
+                      labels: {
+                          color: 'rgb(75, 192, 192)'
+                      }
                   }
-              }]
-          }
-      };
+              }
+          };
+  
+          // Adding additional console logs to inspect the Chart.js instance
+          var areaChart = new Chart(areaCtx, {
+              type: 'line',
+              data: areaChartData,
+              options: areaChartOptions
+          });
+  
+          console.log("Area Chart Instance:", areaChart);
+      </script>
 
-      // Get the context of the canvas element we want to select
-      var areaCtx = document.getElementById('areaChart').getContext('2d');
-
-      // Create the area chart
-      new Chart(areaCtx, {
-          type: 'line', // Use 'line' type to create an area chart
-          data: areaChartData,
-          options: areaChartOptions
-      });
-        </script>
+      
 {% endblock %}

@@ -70,6 +70,7 @@ class OrderItem(Base):
 
 class Order(Base):
     __tablename__ = 'orders'
+    date = Column(DateTime, default=datetime.datetime.utcnow)
     id = Column(Integer, primary_key=True, autoincrement=True)
     customer_status_id = Column(Integer, ForeignKey('statusTestDine.s_no'), index=True)
     status = relationship("Status", back_populates="orders")
