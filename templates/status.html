@@ -21,34 +21,34 @@
                   </div>
 
                   <div class="popup" id="popup">
-                    <form method="post" action="/status">
+                    <form method="post" action="/status" onsubmit="return validateStatusForm()">
                       <div class="form-group">
                         <label for="exampleInputUsername1" id="text2">Floor</label>
                         <span class="select2 select2-container select2-container--default select2-container--below" id="myTextField">
-                            <select class="js-example-basic-single w-100" id="select" name="floor">
-                                <option class="option" value="Ground Floor">Ground Floor</option>
-                                <option class="option" value="1st Floor">1st Floor</option>
-                                <option class="option" value="2nd Floor">2nd Floor</option>
-                            </select>
+                          <select class="js-example-basic-single w-100" id="select" name="floor">
+                            <option class="option" value="Ground Floor">Ground Floor</option>
+                            <option class="option" value="1st Floor">1st Floor</option>
+                            <option class="option" value="2nd Floor">2nd Floor</option>
+                          </select>
                         </span>
-
+                  
                         <label for="exampleInputUsername1" id="text2">Category</label>
                         <span class="select2 select2-container select2-container--default select2-container--below" id="myTextField">
-                            <select class="js-example-basic-single w-100" id="select" name="category">
-                                <option class="option" value="2 Person">2 Person</option>
-                                <option class="option" value="4 Person">4 Person</option>
-                                <option class="option" value="8 Person">8 Person</option>
-                            </select>
+                          <select class="js-example-basic-single w-100" id="select" name="category">
+                            <option class="option" value="2 Person">2 Person</option>
+                            <option class="option" value="4 Person">4 Person</option>
+                            <option class="option" value="8 Person">8 Person</option>
+                          </select>
                         </span>
-
+                  
                         <label for="customerInput" id="text2">Customer</label>
                         <input type="number" class="form-control" id="customerInput" placeholder="Add Customer" name="customer">
-
+                  
                         <label for="tableInput" id="text2">Table No</label>
-                        <input type="number" class="form-control" id="customerInput" placeholder="Add Table" name="table_no">
+                        <input type="number" class="form-control" id="tableInput" placeholder="Add Table" name="table_no">
                         
                         <div id="buttons">
-                          <button type="submit" class="btn btn-primary mr-2" onclick="return validateStatusForm()">Save</button>
+                          <button type="submit" class="btn btn-primary mr-2">Save</button>
                           <button type="button" class="btn btn-inverse-dark btn-fw" onclick="closePopup()">Cancel</button>
                         </div>
                       </div>
@@ -164,7 +164,6 @@
           function closePopup() {
             popup.classList.remove("open-popup");
           }
-        
           function openEditPopup(id, floor, category, customer, tableNo) {
             // Fill edit form fields with data
             editItemIdField.value = id;
@@ -295,12 +294,12 @@
       function validateStatusForm() {
         let customer = document.getElementById('customerInput').value.trim();
         let tableNo = document.getElementById('tableInput').value.trim();
-        
+    
         if (customer === '' || tableNo === '') {
             alert('Please enter Customer and Table No.');
             return false; // Prevent form submission
         }
-        
+    
         return true; // Proceed with form submission
     }
     

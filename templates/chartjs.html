@@ -1,62 +1,60 @@
 {% extends "layout.html" %}
 {% block body %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
  
-      <!-- partial -->
-      <div class="main-panel">
-        <div class="content-wrapper">
-          <div class="row">
-            <div class="col-lg-6 grid-margin stretch-card">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">Line chart</h4>
-                  <canvas id="lineChart" width="1460" height="730" style="display: block; width: 730px; height: 365px;" class="chartjs-render-monitor"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-6 grid-margin stretch-card">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">Bar chart</h4>
-                  <canvas id="barChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-lg-6 grid-margin stretch-card">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">Area chart</h4>
-                  <canvas id="areaChart" width="1460" height="730" style="display: block; width: 730px; height: 365px;" class="chartjs-render-monitor"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-6 grid-margin stretch-card">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">Doughnut chart</h4>
-                  <canvas id="doughnutChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-lg-6 grid-margin grid-margin-lg-0 stretch-card">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">Pie chart</h4>
-                  <canvas id="pieChart" width="1460" height="730" style="display: block; width: 730px; height: 365px;" class="chartjs-render-monitor"></canvas>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-6 grid-margin grid-margin-lg-0 stretch-card">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">Scatter chart</h4>
-                  <canvas id="scatterChart"></canvas>
-                </div>
-              </div>
-            </div>
+<div class="main-panel">
+  <div class="content-wrapper">
+    <div class="row">
+      <div class="col-lg-6 grid-margin grid-margin-lg-0 stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title">Pie chart</h4>
+            <canvas id="pieChart" width="1000" height="730" style="display: block; width: 730px; height: 365px;" class="chartjs-render-monitor"></canvas>
           </div>
         </div>
+      </div>
+      <div class="col-lg-6 grid-margin grid-margin-lg-0 stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title">Scatter chart</h4>
+            <canvas id="scatterChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Data for the pie chart
+    var salesData = {
+        labels: {{ labels|tojson }}, // Use the dynamic labels
+        datasets: [{
+            data: {{ data|tojson }}, // Use the dynamic data
+            backgroundColor: [
+                '#FF6384',
+                '#36A2EB',
+                '#FFCE56',
+                '#4BC0C0',
+                '#9966FF'
+            ],
+        }]
+    };
+
+    // Options for the pie chart
+    var pieOptions = {
+        responsive: true,
+        maintainAspectRatio: true // Change to true to maintain aspect ratio
+    };
+
+    // Get the context of the canvas element we want to select
+    var ctx = document.getElementById('pieChart').getContext('2d');
+
+    // Create the pie chart
+    new Chart(ctx, {
+        type: 'pie',
+        data: salesData,
+        options: pieOptions
+    });
+  </script>
+
 {% endblock %}

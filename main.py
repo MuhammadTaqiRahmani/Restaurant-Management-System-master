@@ -1,3 +1,5 @@
+import base64
+import io
 import os
 from flask import Flask, flash, redirect,render_template,request, jsonify, session, url_for
 from sqlalchemy.orm import sessionmaker, joinedload, aliased
@@ -8,6 +10,8 @@ from sqlalchemy import create_engine
 from sqlalchemy import func
 from models import Bill
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime
+from sqlalchemy import extract
 
 app = Flask(__name__)
 app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
@@ -15,18 +19,85 @@ app.secret_key = 'Anti_Minsh'
 # recreate_database()
 
 # creating routes
+# @app.route("/")
+# def index():
+#     with session_scope() as db_session:
+#         order_items = db_session.query(OrderItem).options(joinedload(OrderItem.menu_item)).all()
+
+#         # Process data to get sales frequency of each item
+#         sales_frequency = {}
+#         for item in order_items:
+#             menu_item_name = item.menu_item.item
+#             sales_frequency[menu_item_name] = sales_frequency.get(menu_item_name, 0) + item.quantity
+
+#         labels = list(sales_frequency.keys())
+#         data = list(sales_frequency.values())
+
+#     return render_template("index.html", labels=labels, data=data)
+
+
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    with session_scope() as db_session:
+        order_items = db_session.query(OrderItem).options(joinedload(OrderItem.menu_item)).all()
+        bills = db_session.query(Bill).all()
+
+        # Process data to get sales frequency of each item
+        sales_frequency = {}
+        for item in order_items:
+            menu_item_name = item.menu_item.item
+            sales_frequency[menu_item_name] = sales_frequency.get(menu_item_name, 0) + item.quantity
+
+        labels = list(sales_frequency.keys())
+        data = list(sales_frequency.values())
+
+        # Process data for the area chart
+        area_chart_data = []
+        area_chart_labels = []
+        for bill in bills:
+            area_chart_labels.append(bill.time.strftime('%Y-%m-%d'))
+            area_chart_data.append(bill.calculate_total())
+
+    return render_template("index.html", 
+                           labels=labels, 
+                           data=data, 
+                           area_chart_labels=area_chart_labels, 
+                           area_chart_data=area_chart_data)
+
+
+
 
 
 @app.route("/home")
 def home():
     return render_template("home.html")
 
-@app.route("/chart")
-def chartjs():
-    return render_template("chartjs.html")
+# @app.route("/chart")
+# def chartjs():
+#     with session_scope() as db_session:
+#         order_items = db_session.query(OrderItem).all()
+#     chart_url = create_sales_frequency_pie_chart(order_items)
+#     return render_template("chartjs.html", chart_url=chart_url)
+
+
+# @app.route("/chart")
+# def chartjs():
+#     with session_scope() as db_session:
+#         order_items = db_session.query(OrderItem).options(joinedload(OrderItem.menu_item)).all()
+    
+#         # Process data to get sales frequency of each item
+#         sales_frequency = {}
+#         for item in order_items:
+#             menu_item_name = item.menu_item.item
+#             sales_frequency[menu_item_name] = sales_frequency.get(menu_item_name, 0) + item.quantity
+
+#         labels = list(sales_frequency.keys())
+#         data = list(sales_frequency.values())
+
+#     return render_template("chartjs.html", labels=labels, data=data)
+
+
 
 @app.route("/table")
 def table():
@@ -276,6 +347,18 @@ def update_menu_item(item_id):
     
     return jsonify({'status': 'success', 'message': 'Menu item updated successfully', 'item': updated_item})
 
+# validation of item wheather it is available or not
+@app.route("/menu/check_availability/<int:item_id>", methods=['GET'])
+def check_availability(item_id):
+    with session_scope() as db_session:
+        menu_item = db_session.query(Menu).filter(Menu.s_no == item_id).first()
+        if menu_item and menu_item.status == 'Available':
+            return jsonify({'status': 'available'})
+        else:
+            return jsonify({'status': 'unavailable'})
+        
+# --------------------------
+
 
 @app.route("/status", methods=['GET', 'POST'])
 def status():
@@ -311,46 +394,6 @@ def status():
     }
 
     return render_template("status.html", statuses=statuses, floor_status=floor_status)
-
-# @app.route("/status", methods=['GET', 'POST'])
-# def status():
-#     if request.method == 'POST':
-#         floor = request.form.get('floor')
-#         category = request.form.get('category')
-#         customer = request.form.get('customer')
-#         table_no = request.form.get('table_no')
-
-
-
-#         with session_scope() as db_session:
-#             # Calculate current occupied tables on the selected floor
-#             occupied_tables = db_session.query(Status).filter(Status.floor == floor).count()
-            
-#             # Check if adding another table exceeds the capacity (15 tables per floor)
-#             if occupied_tables >= 15:
-#                 flash('Floor has no capacity', 'error')
-#             else:
-#                 entry = Status(floor=floor, category=category, customer=customer, table_no=table_no)
-#                 db_session.add(entry)
-
-#         # Redirect to the status page after processing the form
-#         return redirect('/status')
-
-#     # If it's a GET request, render the status template with current data
-#     with session_scope() as db_session:
-#         statuses = db_session.query(Status).order_by(Status.s_no.asc()).all()
-#         statuses = [status.to_list() for status in statuses]
-    
-#     floor_status = {
-#         'Ground Floor': sum(1 for status in statuses if status[1] == 'Ground Floor'),
-#         '1st Floor': sum(1 for status in statuses if status[1] == '1st Floor'),
-#         '2nd Floor': sum(1 for status in statuses if status[1] == '2nd Floor')
-#     }
-
-#     return render_template("status.html", statuses=statuses, floor_status=floor_status)
-
-
-
 
 
 @app.route("/status/delete/<int:id>", methods=['POST'])

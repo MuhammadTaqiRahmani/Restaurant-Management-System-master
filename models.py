@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+import datetime
+from sqlalchemy import Column, DateTime, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -81,6 +82,7 @@ class Bill(Base):
     order_id = Column(Integer, ForeignKey('orders.id'))
     total = Column(Integer, nullable=False)
     order = relationship("Order", back_populates="bill")  # Ensure this line is correct
+    time = Column(DateTime, default=datetime.datetime.utcnow)
     
     # for bill calculation
     def calculate_total(self):
