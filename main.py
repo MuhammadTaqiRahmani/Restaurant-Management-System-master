@@ -1,22 +1,21 @@
 import base64
+import datetime
 import io
 import os
 from flask import Flask, flash, redirect,render_template,request, jsonify, session, url_for
-from sqlalchemy.orm import sessionmaker, joinedload, aliased
+from sqlalchemy.orm import sessionmaker, joinedload
 from models import OrderItem, Roles, Employees, Category, Menu, Status, Order
 from database import engine, session_scope, recreate_database
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
 from sqlalchemy import func
 from models import Bill
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime
-from sqlalchemy import extract
+
 
 app = Flask(__name__)
 app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
 app.secret_key = 'Anti_Minsh'
-# recreate_database()
+#recreate_database()
 
 # creating routes
 # @app.route("/")
@@ -37,11 +36,19 @@ app.secret_key = 'Anti_Minsh'
 
 
 
+from datetime import datetime, timezone
+
+from datetime import datetime, timezone, timedelta
+
+from datetime import datetime, timezone
+
+from datetime import datetime, timezone, timedelta
+
 @app.route("/")
 def index():
     with session_scope() as db_session:
         order_items = db_session.query(OrderItem).options(joinedload(OrderItem.menu_item)).all()
-        bills = db_session.query(Bill).all()
+        orders = db_session.query(Order).all()
 
         # Process data to get sales frequency of each item
         sales_frequency = {}
@@ -52,21 +59,40 @@ def index():
         labels = list(sales_frequency.keys())
         data = list(sales_frequency.values())
 
-        # Process data for the area chart
-        area_chart_data = []
-        area_chart_labels = []
-        for bill in bills:
-            area_chart_labels.append(bill.time.strftime('%Y-%m-%d'))
-            area_chart_data.append(bill.calculate_total())
+        # Process data for the area chart using orders
+        today = datetime.now(timezone.utc)
+        first_day_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        last_day_of_month = (first_day_of_month + timedelta(days=32)).replace(day=1) - timedelta(seconds=1)
 
-    return render_template("index.html", 
-                           labels=labels, 
-                           data=data, 
-                           area_chart_labels=area_chart_labels, 
+        daily_earnings = {}
+        for order in orders:
+            order_date = order.date.replace(tzinfo=timezone.utc)
+            if first_day_of_month <= order_date <= today:
+                order_total = sum(item.menu_item.price * item.quantity for item in order.items)
+                order_date_str = order_date.date()
+                if order_date_str in daily_earnings:
+                    daily_earnings[order_date_str] += order_total
+                else:
+                    daily_earnings[order_date_str] = order_total
+            else:
+                print(f"Order date {order_date} is outside the range {first_day_of_month} to {today}")
+
+        # Sorting the dates
+        sorted_dates = sorted(daily_earnings.keys())
+        area_chart_labels = [date.strftime('%Y-%m-%d') for date in sorted_dates]
+        area_chart_data = [daily_earnings[date] for date in sorted_dates]
+
+        # Debug prints
+        print("Labels:", labels)
+        print("Data:", data)
+        print("Area Chart Labels:", area_chart_labels)
+        print("Area Chart Data:", area_chart_data)
+
+    return render_template("index.html",
+                           labels=labels,
+                           data=data,
+                           area_chart_labels=area_chart_labels,
                            area_chart_data=area_chart_data)
-
-
-
 
 
 @app.route("/home")
