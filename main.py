@@ -12,30 +12,14 @@ from models import Bill
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from sqlalchemy import extract
+from models import Bill
+from collections import defaultdict
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
 app.secret_key = 'Anti_Minsh'
 # recreate_database()
-
-# creating routes
-# @app.route("/")
-# def index():
-#     with session_scope() as db_session:
-#         order_items = db_session.query(OrderItem).options(joinedload(OrderItem.menu_item)).all()
-
-#         # Process data to get sales frequency of each item
-#         sales_frequency = {}
-#         for item in order_items:
-#             menu_item_name = item.menu_item.item
-#             sales_frequency[menu_item_name] = sales_frequency.get(menu_item_name, 0) + item.quantity
-
-#         labels = list(sales_frequency.keys())
-#         data = list(sales_frequency.values())
-
-#     return render_template("index.html", labels=labels, data=data)
-
-
 
 @app.route("/")
 def index():
@@ -53,50 +37,33 @@ def index():
         data = list(sales_frequency.values())
 
         # Process data for the area chart
-        area_chart_data = []
-        area_chart_labels = []
+        minute_profit = defaultdict(int)
         for bill in bills:
-            area_chart_labels.append(bill.time.strftime('%Y-%m-%d'))
-            area_chart_data.append(bill.calculate_total())
+            minute = bill.time.strftime('%Y-%m-%d %H:%M')  # Aggregate by minute
+            minute_profit[minute] += bill.calculate_total()
+
+        # Sort the data by time
+        sorted_minutes = sorted(minute_profit.keys())
+        area_chart_labels = sorted_minutes
+        area_chart_data = [minute_profit[minute] for minute in sorted_minutes]
+        
+        total_orders = db_session.query(Order).count()
+        total_customers = db_session.query(Status).count()
+        total_employees = db_session.query(Employees).count()
 
     return render_template("index.html", 
                            labels=labels, 
-                           data=data, 
+                           data=data,
                            area_chart_labels=area_chart_labels, 
-                           area_chart_data=area_chart_data)
-
-
-
+                           area_chart_data=area_chart_data,
+                           total_orders=total_orders,
+                           total_customers=total_customers,
+                           total_employees=total_employees)
 
 
 @app.route("/home")
 def home():
     return render_template("home.html")
-
-# @app.route("/chart")
-# def chartjs():
-#     with session_scope() as db_session:
-#         order_items = db_session.query(OrderItem).all()
-#     chart_url = create_sales_frequency_pie_chart(order_items)
-#     return render_template("chartjs.html", chart_url=chart_url)
-
-
-# @app.route("/chart")
-# def chartjs():
-#     with session_scope() as db_session:
-#         order_items = db_session.query(OrderItem).options(joinedload(OrderItem.menu_item)).all()
-    
-#         # Process data to get sales frequency of each item
-#         sales_frequency = {}
-#         for item in order_items:
-#             menu_item_name = item.menu_item.item
-#             sales_frequency[menu_item_name] = sales_frequency.get(menu_item_name, 0) + item.quantity
-
-#         labels = list(sales_frequency.keys())
-#         data = list(sales_frequency.values())
-
-#     return render_template("chartjs.html", labels=labels, data=data)
-
 
 
 @app.route("/table")
