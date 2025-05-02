@@ -3,9 +3,9 @@ from collections import defaultdict
 import datetime
 import io
 import os
-from flask import Flask, flash, redirect,render_template,request, jsonify, session, url_for
+from flask import Flask, flash, redirect, render_template, request, jsonify, session, url_for
 from sqlalchemy.orm import sessionmaker, joinedload
-from models import OrderItem, Roles, Employees, Category, Menu, Status, Order
+from models import OrderItem, Roles, Employees, Category, Menu, Status, Order, User
 from database import engine, session_scope, recreate_database
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
@@ -13,15 +13,61 @@ from models import Bill
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from sqlalchemy import extract
+from authentication import auth, login_required, admin_required
 
 app = Flask(__name__)
 app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
 app.secret_key = 'Anti_Minsh'
+# Register the authentication blueprint
+app.register_blueprint(auth, url_prefix='/')
+
+# IMPORTANT: Comment out this line after first run - it will DELETE ALL DATA each time the app starts
 # recreate_database()
 
+# Create initial admin user function
+def create_initial_admin():
+    print("Attempting to create admin user...")
+    with session_scope() as db_session:
+        admin_exists = db_session.query(User).filter_by(username='admin').first()
+        if not admin_exists:
+            try:
+                admin_user = User(
+                    username='admin',
+                    email='admin@restaurant.com',
+                    is_admin=True,
+                    is_active=True
+                )
+                admin_user.set_password('admin123')
+                db_session.add(admin_user)
+                db_session.commit()
+                print("Admin user created successfully with username 'admin' and password 'admin123'")
+            except Exception as e:
+                print(f"Error creating admin user: {str(e)}")
+                db_session.rollback()
+        else:
+            print("Admin user already exists in the database")
 
+# Initialize admin user with a proper setup event
+@app.before_request
+def before_first_request():
+    # Use a session flag to ensure this runs only once
+    if not session.get('_initial_setup_done'):
+        create_initial_admin()
+        session['_initial_setup_done'] = True
+
+# Inject user data into all templates
+@app.context_processor
+def inject_user():
+    user_data = None
+    if 'user_id' in session:
+        with session_scope() as db_session:
+            user = db_session.query(User).filter_by(id=session['user_id']).first()
+            if user:
+                user_data = user.to_dict()
+    return dict(current_user=user_data)
 
 @app.route("/")
+@login_required
 def index():
     with session_scope() as db_session:
         order_items = db_session.query(OrderItem).options(joinedload(OrderItem.menu_item)).all()
@@ -61,32 +107,76 @@ def index():
                            total_employees=total_employees)
 
 
-
-
 @app.route("/home")
+@login_required
 def home():
     return render_template("home.html")
 
 
 @app.route("/table")
+@login_required
 def table():
     return render_template("basic-table.html")
 
 
 @app.route("/management")
+@login_required
+@admin_required
 def management():
     return render_template("Managementib.html")
 
 @app.route("/months")
+@login_required
 def months():
-    return render_template("days.html")
+    with session_scope() as db_session:
+        # Query to get monthly sales data
+        current_year = datetime.now().year
+        monthly_sales = db_session.query(
+            extract('month', Bill.time).label('month'),
+            func.sum(Bill.total_amount).label('total_sales')
+        ).filter(extract('year', Bill.time) == current_year)\
+         .group_by(extract('month', Bill.time))\
+         .order_by(extract('month', Bill.time))\
+         .all()
+        
+        # Convert month numbers to month names and format results
+        month_names = ["January", "February", "March", "April", "May", "June", 
+                       "July", "August", "September", "October", "November", "December"]
+        formatted_data = []
+        
+        for month_num, total in monthly_sales:
+            month_name = month_names[int(month_num) - 1]  # Convert to 0-based index
+            formatted_data.append({
+                'month': month_name,
+                'total': total
+            })
+            
+    return render_template("days.html", monthly_sales=formatted_data)
 
 @app.route("/years")
+@login_required
 def years():
-    return render_template("months.html")
+    with session_scope() as db_session:
+        # Query to get yearly sales data
+        yearly_sales = db_session.query(
+            extract('year', Bill.time).label('year'),
+            func.sum(Bill.total_amount).label('total_sales')
+        ).group_by(extract('year', Bill.time))\
+         .order_by(extract('year', Bill.time))\
+         .all()
+        
+        formatted_data = []
+        for year, total in yearly_sales:
+            formatted_data.append({
+                'year': int(year),
+                'total': total
+            })
+            
+    return render_template("months.html", yearly_sales=formatted_data)
 
 
 @app.route("/bill")
+@login_required
 def bill():
     with session_scope() as db_session:
         # Query to get unique customer_status_id
@@ -112,8 +202,9 @@ def bill():
     return render_template("bill.html", customer_status_ids_dict=customer_status_ids_dict)
 
 
-
 @app.route("/roles", methods=['GET', 'POST'])
+@login_required
+@admin_required
 def roles():
     if request.method == 'POST':
         role = request.form.get('role')
@@ -130,6 +221,8 @@ def roles():
     return render_template("roles.html", roles=roles)
 
 @app.route("/roles/delete/<int:role_id>", methods=['POST'])
+@login_required
+@admin_required
 def delete_role(role_id):
     with session_scope() as db_session:
         role = db_session.query(Roles).filter(Roles.s_no == role_id).first()
@@ -138,6 +231,8 @@ def delete_role(role_id):
     return jsonify({'status': 'success', 'message': 'Role deleted successfully'})
 
 @app.route("/roles/update/<int:role_id>", methods=['POST'])
+@login_required
+@admin_required
 def update_role(role_id):
     role_name = request.form.get('edit_role')
     with session_scope() as db_session:
@@ -148,6 +243,8 @@ def update_role(role_id):
     return jsonify({'status': 'success', 'message': 'Role updated successfully'})
 
 @app.route("/employees", methods=['GET', 'POST'])
+@login_required
+@admin_required
 def employee():
     if request.method == 'POST':
         e_name = request.form.get('e_name')
@@ -170,16 +267,34 @@ def employee():
 
 
 @app.route("/employees/delete/<int:employee_id>", methods=['POST'])
+@login_required
+@admin_required
 def delete_employee(employee_id):
-    with session_scope() as db_session:
-        employee = db_session.query(Employees).filter(Employees.s_no == employee_id).first()
-        if employee:
-            db_session.delete(employee)
-    return jsonify({'status': 'success', 'message': 'Employee deleted successfully'})
-
+    try:
+        with session_scope() as db_session:
+            # First check if there are any users associated with this employee
+            user = db_session.query(User).filter(User.employee_id == employee_id).first()
+            if user:
+                # Option 1: Set the employee_id to NULL for the associated user
+                user.employee_id = None
+                # Option 2 (alternative): Delete the associated user
+                # db_session.delete(user)
+                
+            # Now delete the employee
+            employee = db_session.query(Employees).filter(Employees.s_no == employee_id).first()
+            if employee:
+                db_session.delete(employee)
+                
+        return jsonify({'status': 'success', 'message': 'Employee deleted successfully'})
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error deleting employee: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Failed to delete employee. Error: ' + str(e)}), 500
 
 
 @app.route("/employees/update/<int:employee_id>", methods=['POST'])
+@login_required
+@admin_required
 def update_employee(employee_id):
     emp_name = request.form.get('edit_name')
     emp_role_name = request.form.get('edit_role')
@@ -196,6 +311,8 @@ def update_employee(employee_id):
 
 
 @app.route("/categories", methods=['GET', 'POST'])
+@login_required
+@admin_required
 def categories():
     if request.method == 'POST':
         cat = request.form.get('cat')
@@ -215,6 +332,8 @@ def categories():
     return render_template("foodCategories.html", cats=cats)
 
 @app.route("/categories/delete/<int:cat_id>", methods=['POST'])
+@login_required
+@admin_required
 def delete_category(cat_id):
     with session_scope() as db_session:
         category = db_session.query(Category).filter(Category.s_no == cat_id).first()
@@ -224,6 +343,8 @@ def delete_category(cat_id):
 
 
 @app.route("/categories/update/<int:cat_id>", methods=['POST'])
+@login_required
+@admin_required
 def update_category(cat_id):
     cat_name = request.form.get('edit_cat')
     with session_scope() as db_session:
@@ -242,6 +363,7 @@ def update_category(cat_id):
         return jsonify({'status': 'error', 'message': 'Category not found'})
 
 @app.route("/menu", methods=['GET', 'POST'])
+@login_required
 def menu():
     try:
         Session = sessionmaker(bind=engine)
@@ -278,6 +400,8 @@ def menu():
 
 
 @app.route("/menu/delete/<int:item_id>", methods=['POST'])
+@login_required
+@admin_required
 def delete_menu_item(item_id):
     with session_scope() as db_session:
         menu_item = db_session.query(Menu).filter(Menu.s_no == item_id).first()
@@ -287,6 +411,8 @@ def delete_menu_item(item_id):
 
 
 @app.route("/menu/update/<int:item_id>", methods=['POST'])
+@login_required
+@admin_required
 def update_menu_item(item_id):
     item_name = request.form.get('edit_item_name')
     price = request.form.get('edit_price')
@@ -318,6 +444,7 @@ def update_menu_item(item_id):
 
 # validation of item wheather it is available or not
 @app.route("/menu/check_availability/<int:item_id>", methods=['GET'])
+@login_required
 def check_availability(item_id):
     with session_scope() as db_session:
         menu_item = db_session.query(Menu).filter(Menu.s_no == item_id).first()
@@ -330,6 +457,7 @@ def check_availability(item_id):
 
 
 @app.route("/status", methods=['GET', 'POST'])
+@login_required
 def status():
     if request.method == 'POST':
         floor = request.form.get('floor')
@@ -366,6 +494,8 @@ def status():
 
 
 @app.route("/status/delete/<int:id>", methods=['POST'])
+@login_required
+@admin_required
 def delete_status(id):
     with session_scope() as db_session:
         status = db_session.query(Status).filter_by(s_no=id).first()
@@ -379,6 +509,8 @@ def delete_status(id):
         
         
 @app.route("/status/update/<int:id>", methods=['POST'])
+@login_required
+@admin_required
 def update_status(id):
     floor = request.form.get('edit_floor')
     category = request.form.get('edit_category')
@@ -416,6 +548,7 @@ def update_status(id):
 
 
 @app.route("/orders", methods=['GET', 'POST'])
+@login_required
 def orders():
     if request.method == 'POST':
         customer_status_id = request.form.get('customer_status_id')
@@ -444,6 +577,8 @@ def orders():
 
 
 @app.route("/orders/delete/<int:order_id>", methods=['POST'])
+@login_required
+@admin_required
 def delete_order(order_id):
     with session_scope() as db_session:
         order = db_session.query(Order).filter(Order.id == order_id).first()
@@ -492,6 +627,7 @@ def get_orders_data(order_id):
 
 
 @app.route("/orderinfo/<int:order_id>", methods=['GET', 'POST'])
+@login_required
 def order_info(order_id):
     if request.method == 'POST':
         try:
@@ -521,6 +657,7 @@ def order_info(order_id):
     return render_template("orderinfo.html", order_id=order_id, orders_data=orders_data)
 
 @app.route("/orderinfo/delete/<int:menu_item_id>", methods=['POST'])
+@login_required
 def delete_order_item(menu_item_id):
     try:
         with session_scope() as db_session:
@@ -535,6 +672,7 @@ def delete_order_item(menu_item_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
     
 @app.route("/orderinfo/update/<int:menu_item_id>", methods=['POST'])
+@login_required
 def update_order_item(menu_item_id):
     try:
         quantity = int(request.form.get('edit_quantity'))
@@ -554,5 +692,5 @@ def update_order_item(menu_item_id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-
-app.run(debug=True,host="0.0.0.0")
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0")

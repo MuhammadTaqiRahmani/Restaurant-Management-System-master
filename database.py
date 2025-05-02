@@ -8,15 +8,14 @@ import os
 load_dotenv(override=True)
 
 # connection with database server
-# connection with database server
 server = os.getenv('DB_SERVER')
 database = os.getenv('DB_DATABASE')
-driver = '{ODBC Driver 17 for SQL Server}'
 username = os.getenv('DB_USERNAME')
 password = os.getenv('DB_PASSWORD')
 
+# Update connection string to use SQL authentication
 engine = create_engine(
-    f"mssql+pyodbc://@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server",
+    f"mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server",
     fast_executemany=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -42,3 +41,4 @@ def recreate_database():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
+# Data base connection/connectivity

@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div class="main-panel">          
+  <div class="content-wrapper">
+    <div class="row">
+      <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title">Register New User</h4>
+            <p class="card-description">
+              Create a new user account with appropriate permissions
+            </p>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            
+            <form class="forms-sample" method="POST" action="{{ url_for('auth.admin_register') }}">
+              <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+              </div>
+              <div class="form-group">
+                <label for="email">Email address</label>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+              </div>
+              <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+              </div>
+              <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+              </div>
+              <div class="form-group">
+                <label for="employee_id">Employee ID (Optional)</label>
+                <input type="number" class="form-control" id="employee_id" name="employee_id" placeholder="Link to existing employee">
+                <small class="form-text text-muted">
+                  If this user account is for an existing employee, enter their Employee ID here.
+                </small>
+              </div>
+              <div class="form-check form-check-flat form-check-primary">
+                <label class="form-check-label">
+                  <input type="checkbox" class="form-check-input" name="is_admin">
+                  Admin privileges
+                </label>
+                <p class="card-description mt-1">
+                  <small>Admin users can manage all aspects of the system including other users.</small>
+                </p>
+              </div>
+              <button type="submit" class="btn btn-primary mr-2">Submit</button>
+              <a href="{{ url_for('auth.admin_users') }}" class="btn btn-light">Cancel</a>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- content-wrapper ends -->
+</div>
+</div>
+
+<!-- main-panel ends -->
+
+{% endblock %}

@@ -6,7 +6,7 @@
   <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Skydash Admin</title>
+  <title>Restaurant Management System</title>
   <!-- plugins:css -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/vertical-layout-light/roles.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/vertical-layout-light/roles.css') }}">
@@ -35,9 +35,9 @@
     <!-- partial:partials/_navbar.html -->
     <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
       <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-        <a class="navbar-brand brand-logo mr-5" href="index.html"><img
+        <a class="navbar-brand brand-logo mr-5" href="{{ url_for('index') }}"><img
             src="{{ url_for('static', filename='images/logo.svg') }}" class="mr-2" alt="logo" /></a>
-        <a class="navbar-brand brand-logo-mini" href="index.html"><img
+        <a class="navbar-brand brand-logo-mini" href="{{ url_for('index') }}"><img
             src="{{ url_for('static', filename='images/logo-mini.svg') }}" alt="logo" /></a>
       </div>
       <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
@@ -113,14 +113,31 @@
               <img src="{{ url_for('static', filename='images/faces/face28.jpg') }}" alt="profile" />
             </a>
             <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-              <a class="dropdown-item">
-                <i class="ti-settings text-primary"></i>
-                Settings
-              </a>
-              <a class="dropdown-item">
-                <i class="ti-power-off text-primary"></i>
-                Logout
-              </a>
+              {% if current_user is defined and current_user %}
+                <div class="dropdown-item">
+                  <i class="ti-user text-primary"></i>
+                  <span>{{ current_user.username }}</span>
+                  {% if current_user.is_admin %}
+                    <span class="badge badge-primary ml-1">Admin</span>
+                  {% endif %}
+                </div>
+                {% if current_user.is_admin %}
+                  <a class="dropdown-item" href="#" id="admin-logout-btn">
+                    <i class="ti-power-off text-primary"></i>
+                    Logout
+                  </a>
+                {% else %}
+                  <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                    <i class="ti-power-off text-primary"></i>
+                    Logout
+                  </a>
+                {% endif %}
+              {% else %}
+                <a class="dropdown-item" href="{{ url_for('auth.login') }}">
+                  <i class="ti-login text-primary"></i>
+                  Login
+                </a>
+              {% endif %}
             </div>
           </li>
           <li class="nav-item nav-settings d-none d-lg-flex">
@@ -325,7 +342,7 @@
       <nav class="sidebar sidebar-offcanvas" id="sidebar">
         <ul class="nav">
           <li class="nav-item">
-            <a class="nav-link" href="/">
+            <a class="nav-link" href="{{ url_for('index') }}">
               <i class="icon-grid menu-icon"></i>
               <span class="menu-title">Dashboard</span>
             </a>
@@ -335,21 +352,56 @@
             <a class="nav-link" data-toggle="collapse" href="#management" aria-expanded="false"
               aria-controls="management">
               <i class="icon-columns menu-icon"></i>
-              <span class="menu-title">Management</span>
+              <span class="menu-title">Restaurant Management</span>
               <i class="menu-arrow"></i>
             </a>
             <div class="collapse" id="management">
               <ul class="nav flex-column sub-menu">
-                <li class="nav-item"><a class="nav-link" href="/roles">Roles</a></li>
-                <li class="nav-item"><a class="nav-link" href="/employees">Employees</a></li>
-                <li class="nav-item"><a class="nav-link" href="/categories">Categories</a></li>
-                <li class="nav-item"><a class="nav-link" href="/menu">Menu</a></li>
-                <li class="nav-item"><a class="nav-link" href="/status">Status</a></li>
-                <li class="nav-item"><a class="nav-link" href="/orders">Order</a></li>
-                <li class="nav-item"><a class="nav-link" href="/bill">Bill Generation</a></li>
+                {% if current_user and current_user.is_admin %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('roles') }}">Roles</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('employee') }}">Employees</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('categories') }}">Categories</a></li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('menu') }}">Menu</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('status') }}">Status</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('orders') }}">Orders</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('bill') }}">Bill Generation</a></li>
               </ul>
             </div>
           </li>
+          
+          {% if current_user and current_user.is_admin %}
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#admin-panel" aria-expanded="false"
+              aria-controls="admin-panel">
+              <i class="icon-head menu-icon"></i>
+              <span class="menu-title">Admin Panel</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="admin-panel">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.admin_users') }}">User Management</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.admin_register') }}">Add User</a></li>
+              </ul>
+            </div>
+          </li>
+          {% endif %}
+
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="collapse" href="#reports" aria-expanded="false"
+              aria-controls="reports">
+              <i class="icon-bar-graph menu-icon"></i>
+              <span class="menu-title">Reports</span>
+              <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="reports">
+              <ul class="nav flex-column sub-menu">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('months') }}">Monthly Sales</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('years') }}">Yearly Sales</a></li>
+              </ul>
+            </div>
+          </li>
+        </ul>
       </nav>
 
 
@@ -397,6 +449,41 @@
   <script src="{{ url_for('static', filename='js/Chart.roundedBarCharts.js') }}"></script>
   <script src="{{ url_for('static', filename='js/ICONIC.js') }}"></script>
   <!-- End custom js for this page-->
-</body>
 
+  <!-- Admin Logout Modal -->
+  <div class="modal fade" id="adminLogoutModal" tabindex="-1" role="dialog" aria-labelledby="adminLogoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="adminLogoutModalLabel">Confirm Logout</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to logout from the admin panel?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-primary">Confirm Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom script for admin logout -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const adminLogoutBtn = document.getElementById('admin-logout-btn');
+      if(adminLogoutBtn) {
+        adminLogoutBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          $('#adminLogoutModal').modal('show');
+        });
+      }
+    });
+  </script>
+</body>
+  <!-- This is the base template, -->
+   <!-- The Jinja2 is used for the UI of the system, this technique is called is jinja templating -->
 </html>

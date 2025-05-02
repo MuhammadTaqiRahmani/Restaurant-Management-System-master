@@ -1,9 +1,39 @@
 import datetime
-from sqlalchemy import Column, DateTime, Integer, String, ForeignKey
+from sqlalchemy import Column, DateTime, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # creation of models
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    username = Column(String(50), unique=True, index=True)
+    email = Column(String(100), unique=True, index=True)
+    password_hash = Column(String(255))
+    is_admin = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    date_joined = Column(DateTime, default=datetime.datetime.utcnow)
+    employee_id = Column(Integer, ForeignKey('employeesTestDine.s_no'), nullable=True)
+    employee = relationship("Employees", foreign_keys=[employee_id])
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+        
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'is_admin': self.is_admin,
+            'is_active': self.is_active,
+            'date_joined': self.date_joined,
+            'employee_id': self.employee_id
+        }
+
 class Roles(Base):
     __tablename__ = "rolesTestDine"
     s_no = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -91,4 +121,4 @@ class Bill(Base):
         return self.total
     
 
-    
+#  These are models, defined for the database

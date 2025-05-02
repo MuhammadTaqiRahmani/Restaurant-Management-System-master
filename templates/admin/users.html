@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/vertical-layout-light/users.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vertical-layout-light/roles.css') }}">
 <div class="main-panel">          
   <div class="content-wrapper">
     <div class="row">
@@ -18,7 +18,7 @@
               </a>
             </div>
             <div class="table-responsive">
-              <table class="table table-hover" id="userTable">
+              <table class="table table-hover">
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -120,17 +120,10 @@
         <label for="edit-employee-id">Employee ID (Optional)</label>
         <input type="number" class="form-control" id="edit-employee-id" name="edit_employee_id">
       </div>
-      <div class="form-group">
-        <label for="edit-password">New Password (Leave blank to keep current password)</label>
-        <input type="password" class="form-control" id="edit-password" name="edit_password">
-      </div>
-      <div class="form-group">
-        <label for="edit-confirm-password">Confirm New Password</label>
-        <input type="password" class="form-control" id="edit-confirm-password" name="edit_confirm_password">
-      </div>
       <button type="submit" class="btn btn-primary">Update User</button>
     </form>
   </div>
+</div>
 </div>
 
 <script>
@@ -150,10 +143,7 @@
     editIsAdminField.checked = isAdmin;
     editIsActiveField.checked = isActive;
     editEmployeeIdField.value = employeeId !== null ? employeeId : '';
-    // Reset password fields
-    document.getElementById("edit-password").value = '';
-    document.getElementById("edit-confirm-password").value = '';
-    editForm.action = "/users/update/" + userId;
+    editForm.action = "/admin/users/update/" + userId;
     editPopup.classList.add("open-popup");
   }
 
@@ -163,49 +153,79 @@
 
   function deleteUser(userId) {
     if (confirm('Are you sure you want to delete this user?')) {
-      let form = document.createElement('form');
-      form.method = 'POST';
-      form.action = "/users/delete/" + userId;
-      document.body.appendChild(form);
-      form.submit();
+      fetch(`/admin/users/delete/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          alert(data.message);
+          // Find and remove the user row by finding the row with matching ID
+          const rows = document.querySelectorAll('tr');
+          for (let i = 0; i < rows.length; i++) {
+            const idCell = rows[i].querySelector('td:first-child');
+            if (idCell && idCell.textContent.trim() == userId) {
+              rows[i].remove();
+              return;
+            }
+          }
+          // If the row wasn't found and removed, reload the page
+          window.location.reload();
+        } else {
+          alert(data.message || 'Error deleting user');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the user');
+      });
     }
   }
-
-  // Add form validation for password matching
-  editForm.addEventListener('submit', function(event) {
-    const password = document.getElementById('edit-password').value;
-    const confirmPassword = document.getElementById('edit-confirm-password').value;
-    
-    if (password !== '' && password !== confirmPassword) {
-      alert('Passwords do not match!');
-      event.preventDefault();
-    }
-  });
-  
-  // Add search functionality for the user table
-  document.getElementById('searchInput')?.addEventListener('keyup', function() {
-    let input = this.value.toLowerCase();
-    let rows = document.getElementById("userTable").getElementsByTagName("tbody")[0].getElementsByTagName("tr");
-    
-    for (let i = 0; i < rows.length; i++) {
-      let match = false;
-      let cells = rows[i].getElementsByTagName("td");
-      
-      for (let j = 0; j < cells.length; j++) {
-        if (cells[j].textContent.toLowerCase().indexOf(input) > -1) {
-          match = true;
-          break;
-        }
-      }
-      
-      if (match) {
-        rows[i].style.display = "";
-      } else {
-        rows[i].style.display = "none";
-      }
-    }
-  });
 </script>
+
+<style>
+  .popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .open-popup {
+    display: flex;
+  }
+
+  .popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 500px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+  }
+
+  .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .close-btn {
+    cursor: pointer;
+    font-size: 24px;
+  }
+</style>
 
 </div>
 <!-- main-panel ends -->
