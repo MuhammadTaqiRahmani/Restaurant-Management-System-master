@@ -119,6 +119,12 @@
                   <span>{{ current_user.username }}</span>
                   {% if current_user.is_admin %}
                     <span class="badge badge-primary ml-1">Admin</span>
+                  {% else %}
+                    {% if session.user_role is defined %}
+                      <span class="badge badge-info ml-1">{{ session.user_role }}</span>
+                    {% else %}
+                      <span class="badge badge-info ml-1">Employee</span>
+                    {% endif %}
                   {% endif %}
                 </div>
                 {% if current_user.is_admin %}
@@ -127,16 +133,39 @@
                     Logout
                   </a>
                 {% else %}
-                  <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                  <a class="dropdown-item" href="#" id="employee-logout-btn">
                     <i class="ti-power-off text-primary"></i>
                     Logout
                   </a>
                 {% endif %}
               {% else %}
-                <a class="dropdown-item" href="{{ url_for('auth.login') }}">
-                  <i class="ti-login text-primary"></i>
-                  Login
-                </a>
+                {% if session.user_id is defined %}
+                  <div class="dropdown-item">
+                    <i class="ti-user text-primary"></i>
+                    <span>{{ session.username }}</span>
+                    {% if session.is_admin %}
+                      <span class="badge badge-primary ml-1">Admin</span>
+                    {% else %}
+                      <span class="badge badge-info ml-1">{{ session.user_role|default('Employee') }}</span>
+                    {% endif %}
+                  </div>
+                  {% if session.is_admin %}
+                    <a class="dropdown-item" href="#" id="admin-logout-btn">
+                      <i class="ti-power-off text-primary"></i>
+                      Logout
+                    </a>
+                  {% else %}
+                    <a class="dropdown-item" href="#" id="employee-logout-btn">
+                      <i class="ti-power-off text-primary"></i>
+                      Logout
+                    </a>
+                  {% endif %}
+                {% else %}
+                  <a class="dropdown-item" href="{{ url_for('auth.login') }}">
+                    <i class="ti-login text-primary"></i>
+                    Login
+                  </a>
+                {% endif %}
               {% endif %}
             </div>
           </li>
@@ -471,6 +500,27 @@
     </div>
   </div>
 
+  <!-- Employee Logout Modal -->
+  <div class="modal fade" id="employeeLogoutModal" tabindex="-1" role="dialog" aria-labelledby="employeeLogoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="employeeLogoutModalLabel">Confirm Logout</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to logout?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-primary">Confirm Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Custom script for admin logout -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -479,6 +529,15 @@
         adminLogoutBtn.addEventListener('click', function(e) {
           e.preventDefault();
           $('#adminLogoutModal').modal('show');
+        });
+      }
+      
+      // Employee logout functionality
+      const employeeLogoutBtn = document.getElementById('employee-logout-btn');
+      if(employeeLogoutBtn) {
+        employeeLogoutBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          $('#employeeLogoutModal').modal('show');
         });
       }
     });
