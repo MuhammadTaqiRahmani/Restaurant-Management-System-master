@@ -48,9 +48,9 @@ def validate_employee(employee_id, username=None):
             cursor.execute("SELECT * FROM employeesTestDine WHERE s_no = ?", (employee_id,))
             employee = cursor.fetchone()
             
-            # If not found and username is provided, try by name
+            # If not found and username is provided, try by e_name (SQL Server column name)
             if not employee and username:
-                cursor.execute("SELECT * FROM employeesTestDine WHERE name = ?", (username,))
+                cursor.execute("SELECT * FROM employeesTestDine WHERE e_name = ?", (username,))
                 employee = cursor.fetchone()
                 
             conn.close()
@@ -69,7 +69,7 @@ def validate_employee(employee_id, username=None):
     cursor.execute("SELECT * FROM employeesTestDine WHERE s_no = ?", (employee_id,))
     employee = cursor.fetchone()
     
-    # If not found and username is provided, try by name
+    # If not found and username is provided, try by name (SQLite column name)
     if not employee and username:
         cursor.execute("SELECT * FROM employeesTestDine WHERE name = ?", (username,))
         employee = cursor.fetchone()
@@ -228,7 +228,7 @@ def login_required(f):
                         print(f"SQL Server: Total employees in DB: {total_employees}")
                         
                         # Show a sample of employee records
-                        sql_cursor.execute("SELECT TOP 5 s_no, name FROM employeesTestDine")
+                        sql_cursor.execute("SELECT TOP 5 s_no, e_name FROM employeesTestDine")
                         sample_employees = sql_cursor.fetchall()
                         print(f"SQL Server sample employees: {sample_employees}")
                         sql_conn.close()
@@ -338,29 +338,60 @@ def login():
             flash('Please enter both username and password', 'error')
             return render_template("login.html")
         
-        # Use direct SQLite connection for reliable login
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        # Only check SQL Server for users
+        user_dict = None
         
-        # First try username match
-        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-        user = cursor.fetchone()
+        # Check if SQL Server is available
+        if use_sql_server():
+            try:
+                sql_conn = get_sqlserver_connection()
+                sql_cursor = sql_conn.cursor()
+                
+                # Try username match
+                sql_cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+                user_row = sql_cursor.fetchone()
+                
+                # If not found, try email match
+                if not user_row:
+                    sql_cursor.execute("SELECT * FROM users WHERE email = ?", (username,))
+                    user_row = sql_cursor.fetchone()
+                
+                if user_row:
+                    # Convert row to dictionary
+                    user_dict = {
+                        'id': user_row.id if hasattr(user_row, 'id') else user_row[0],
+                        'username': user_row.username if hasattr(user_row, 'username') else user_row[1],
+                        'email': user_row.email if hasattr(user_row, 'email') else user_row[2],
+                        'password_hash': user_row.password_hash if hasattr(user_row, 'password_hash') else user_row[3],
+                        'is_admin': user_row.is_admin if hasattr(user_row, 'is_admin') else user_row[4],
+                        'is_active': user_row.is_active if hasattr(user_row, 'is_active') else user_row[5],
+                        'date_joined': user_row.date_joined if hasattr(user_row, 'date_joined') else user_row[6],
+                        'employee_id': user_row.employee_id if hasattr(user_row, 'employee_id') else user_row[7]
+                    }
+                    print(f"Found user in SQL Server: {user_dict['username']}, {user_dict['email']}, admin: {user_dict['is_admin']}")
+                
+                sql_conn.close()
+            except Exception as e:
+                print(f"Error checking SQL Server for user: {str(e)}")
+                flash(f"Could not connect to the database server. Please try again later or contact an administrator. Error: {str(e)}", "error")
+                return render_template("login.html")
+        else:
+            flash("Database server is not configured. Please contact an administrator.", "error")
+            return render_template("login.html")
         
-        # If not found, try email match
-        if not user:
-            cursor.execute("SELECT * FROM users WHERE email = ?", (username,))
-            user = cursor.fetchone()
-        
-        if user:
-            user_dict = dict(user)
-            print(f"Found user: {user_dict['username']}, {user_dict['email']}, admin: {user_dict['is_admin']}")
-            
+        # If we found a user in the database
+        if user_dict:
             # Check password
             if check_password_hash(user_dict['password_hash'], password):
                 session['user_id'] = user_dict['id']
                 session['username'] = user_dict['username']
-                session['is_admin'] = bool(user_dict['is_admin'])
+                
+                # IMPORTANT: Store the admin status in the session
+                # Convert is_admin to boolean regardless of source (SQLite or SQL Server might store it differently)
+                is_admin_value = bool(user_dict['is_admin'])
+                session['is_admin'] = is_admin_value
+                
+                print(f"Setting is_admin in session to: {is_admin_value}")
                 
                 # Set session timestamp for inactivity timeout
                 import time
@@ -369,54 +400,55 @@ def login():
                 # If the user is an admin, redirect to admin dashboard
                 if session['is_admin']:
                     flash('Logged in successfully as admin', 'success')
-                    conn.close()
                     return redirect(url_for('index'))
                 
                 # If the user is linked to an employee, get their role
                 employee_id = user_dict['employee_id']
                 if employee_id:
-                    # Get the employee's role
-                    cursor.execute("""
-                        SELECT r.role 
-                        FROM employeesTestDine e 
-                        JOIN rolesTestDine r ON e.e_role = r.s_no 
-                        WHERE e.s_no = ?
-                    """, (employee_id,))
-                    role_result = cursor.fetchone()
-                    
-                    if role_result:
-                        role = role_result[0]
-                        session['user_role'] = role
-                        print(f"User role: {role}")
+                    # Use SQL Server for role lookup
+                    try:
+                        sql_conn = get_sqlserver_connection()
+                        sql_cursor = sql_conn.cursor()
                         
-                        # Redirect based on role
-                        if role.lower() == 'waiter':
-                            flash(f'Logged in successfully as {role}', 'success')
-                            conn.close()
-                            return redirect(url_for('orders'))
-                        elif role.lower() == 'chef' or role.lower() == 'kitchen':
-                            flash(f'Logged in successfully as {role}', 'success')
-                            conn.close()
-                            return redirect(url_for('status'))
-                        elif role.lower() == 'manager':
-                            flash(f'Logged in successfully as {role}', 'success')
-                            conn.close()
-                            return redirect(url_for('management'))
-                        elif role.lower() == 'cashier':
-                            flash(f'Logged in successfully as {role}', 'success')
-                            conn.close()
-                            return redirect(url_for('bill'))
+                        # Get the employee's role
+                        sql_cursor.execute("""
+                            SELECT r.role 
+                            FROM employeesTestDine e 
+                            JOIN rolesTestDine r ON e.e_role = r.s_no 
+                            WHERE e.s_no = ?
+                        """, (employee_id,))
+                        role_result = sql_cursor.fetchone()
+                        
+                        sql_conn.close()
+                        
+                        if role_result:
+                            role = role_result[0] if hasattr(role_result, '0') else role_result[0]
+                            session['user_role'] = role
+                            print(f"User role: {role}")
+                            
+                            # Redirect based on role
+                            if role.lower() == 'waiter':
+                                flash(f'Logged in successfully as {role}', 'success')
+                                return redirect(url_for('orders'))
+                            elif role.lower() == 'chef' or role.lower() == 'kitchen':
+                                flash(f'Logged in successfully as {role}', 'success')
+                                return redirect(url_for('status'))
+                            elif role.lower() == 'manager':
+                                flash(f'Logged in successfully as {role}', 'success')
+                                return redirect(url_for('management'))
+                            elif role.lower() == 'cashier':
+                                flash(f'Logged in successfully as {role}', 'success')
+                                return redirect(url_for('bill'))
+                    except Exception as e:
+                        print(f"Error getting employee role: {str(e)}")
                 
                 # Default redirect if no specific role or role not matched
                 flash('Logged in successfully', 'success')
-                conn.close()
                 return redirect(url_for('index'))
             else:
                 flash('Incorrect password. Please try again.', 'error')
         else:
             flash(f'No user found with the username or email: {username}', 'error')
-        
-        conn.close()
     
     return render_template("login.html")
 
@@ -569,72 +601,189 @@ def update_user(user_id):
         is_admin = 'edit_is_admin' in request.form
         is_active = 'edit_is_active' in request.form
         employee_id = request.form.get('edit_employee_id')
+        password = request.form.get('edit_password')
+        confirm_password = request.form.get('edit_confirm_password')
+        
+        # Debug info
+        print(f"Updating user ID {user_id}: username={username}, email={email}, is_admin={is_admin}, is_active={is_active}, employee_id={employee_id}")
+        print(f"Form data: {dict(request.form)}")
         
         if not username or not email:
             return jsonify({'status': 'error', 'message': 'Username and email are required'}), 400
         
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
+        # Check passwords match if provided
+        if password and password != confirm_password:
+            return jsonify({'status': 'error', 'message': 'Passwords do not match'}), 400
         
-        # Check if the user exists
-        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-        if not cursor.fetchone():
-            conn.close()
-            return jsonify({'status': 'error', 'message': 'User not found'}), 404
+        # Track if admin status is being changed for the current logged-in user
+        requires_relogin = False
+        current_admin_status = None
         
-        # Check if another user already has this username
-        cursor.execute("SELECT * FROM users WHERE username = ? AND id != ?", (username, user_id))
-        if cursor.fetchone():
-            conn.close()
-            return jsonify({'status': 'error', 'message': 'Username already taken by another user'}), 400
+        # Use SQL Server as the primary database
+        user_exists = False
+        update_successful = False
         
-        # Check if another user already has this email
-        cursor.execute("SELECT * FROM users WHERE email = ? AND id != ?", (email, user_id))
-        if cursor.fetchone():
-            conn.close()
-            return jsonify({'status': 'error', 'message': 'Email already in use by another user'}), 400
-        
-        # Update user fields
-        employee_id_value = None
-        if employee_id and employee_id.strip():
+        # First update in SQL Server database (primary)
+        if use_sql_server():
             try:
-                employee_id_value = int(employee_id)
-            except ValueError:
+                sql_conn = get_sqlserver_connection()
+                sql_cursor = sql_conn.cursor()
+                
+                # Check if user exists in SQL Server
+                sql_cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+                user_sql = sql_cursor.fetchone()
+                
+                if user_sql:
+                    user_exists = True
+                    # Save current admin status to check if it's being changed
+                    current_admin_status = bool(user_sql.is_admin if hasattr(user_sql, 'is_admin') else user_sql[4])
+                    
+                    # Check if another user already has this username (excluding the current user)
+                    sql_cursor.execute("SELECT * FROM users WHERE username = ? AND id != ?", (username, user_id))
+                    if sql_cursor.fetchone():
+                        sql_conn.close()
+                        return jsonify({'status': 'error', 'message': 'Username already taken by another user in SQL Server'}), 400
+                    
+                    # Check if another user already has this email (excluding the current user)
+                    sql_cursor.execute("SELECT * FROM users WHERE email = ? AND id != ?", (email, user_id))
+                    if sql_cursor.fetchone():
+                        sql_conn.close()
+                        return jsonify({'status': 'error', 'message': 'Email already in use by another user in SQL Server'}), 400
+                    
+                    # Convert form values to appropriate types
+                    employee_id_value = None
+                    if employee_id and employee_id.strip():
+                        try:
+                            employee_id_value = int(employee_id)
+                        except ValueError:
+                            employee_id_value = None
+                    
+                    # Handle checkbox values properly
+                    is_admin_value = 1 if is_admin else 0
+                    is_active_value = 1 if is_active else 0
+                    
+                    print(f"Updating SQL Server with values: admin={is_admin_value}, active={is_active_value}")
+                    
+                    # Check if we need to update the password
+                    if password:
+                        # Update SQL Server record with new password
+                        sql_cursor.execute("""
+                            UPDATE users 
+                            SET username = ?, email = ?, password_hash = ?, is_admin = ?, is_active = ?, employee_id = ? 
+                            WHERE id = ?
+                        """, (username, email, generate_password_hash(password), is_admin_value, is_active_value, employee_id_value, user_id))
+                    else:
+                        # Update without changing password
+                        sql_cursor.execute("""
+                            UPDATE users 
+                            SET username = ?, email = ?, is_admin = ?, is_active = ?, employee_id = ? 
+                            WHERE id = ?
+                        """, (username, email, is_admin_value, is_active_value, employee_id_value, user_id))
+                    
+                    sql_conn.commit()
+                    update_successful = True
+                    print(f"Updated user {user_id} in SQL Server database")
+                
+                sql_conn.close()
+            except Exception as sql_e:
+                print(f"Error updating user in SQL Server: {str(sql_e)}")
+                return jsonify({'status': 'error', 'message': f'Database error: {str(sql_e)}'}), 500
+        
+        # Try to also update in SQLite for backup purposes, but don't fail if it has issues
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            
+            # Check if the user exists in SQLite
+            cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+            user_sqlite = cursor.fetchone()
+            
+            if user_sqlite:
+                user_exists = True
+                # If current_admin_status isn't set yet, get it from SQLite
+                if current_admin_status is None and user_sqlite:
+                    current_admin_status = bool(user_sqlite[4])  # SQLite is_admin column
+                
+                # Convert form values to appropriate types
                 employee_id_value = None
+                if employee_id and employee_id.strip():
+                    try:
+                        employee_id_value = int(employee_id)
+                    except ValueError:
+                        employee_id_value = None
+                
+                # Handle checkbox values properly
+                is_admin_value = 1 if is_admin else 0
+                is_active_value = 1 if is_active else 0
+                
+                # Check if we need to update the password
+                if password:
+                    # Update SQLite record with new password
+                    cursor.execute("""
+                        UPDATE users 
+                        SET username = ?, email = ?, password_hash = ?, is_admin = ?, is_active = ?, employee_id = ? 
+                        WHERE id = ?
+                    """, (username, email, generate_password_hash(password), is_admin_value, is_active_value, employee_id_value, user_id))
+                else:
+                    # Update without changing password
+                    cursor.execute("""
+                        UPDATE users 
+                        SET username = ?, email = ?, is_admin = ?, is_active = ?, employee_id = ? 
+                        WHERE id = ?
+                    """, (username, email, is_admin_value, is_active_value, employee_id_value, user_id))
+                
+                conn.commit()
+                print(f"Updated user {user_id} in SQLite database")
+            
+            conn.close()
+        except Exception as sqlite_e:
+            # Don't fail if SQLite update fails, just log the error
+            print(f"Warning: Error updating user in SQLite (not critical): {str(sqlite_e)}")
+            # Continue since the SQL Server update is what matters most
         
-        cursor.execute("""
-            UPDATE users 
-            SET username = ?, email = ?, is_admin = ?, is_active = ?, employee_id = ? 
-            WHERE id = ?
-        """, (username, email, is_admin, is_active, employee_id_value, user_id))
+        if not user_exists and not update_successful:
+            return jsonify({'status': 'error', 'message': 'User not found in any database'}), 404
         
-        conn.commit()
-        
-        # Get the updated user for response
-        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-        user_row = cursor.fetchone()
-        
-        conn.close()
-        
-        # Flash a success message
-        flash('User updated successfully', 'success')
+        # Check if admin status is being changed for the current logged-in user
+        if 'user_id' in session and int(session['user_id']) == user_id:
+            old_is_admin = current_admin_status if current_admin_status is not None else session.get('is_admin', False)
+            if bool(old_is_admin) != bool(is_admin):
+                requires_relogin = True
+                print(f"Admin status changed for current user from {old_is_admin} to {is_admin}")
+            
+            # IMPORTANT: Update the session immediately so permissions take effect right away
+            print(f"Updating session for user {user_id} with new admin status: {is_admin}")
+            session['is_admin'] = bool(is_admin)
+            session['username'] = username
+            
+            # Flash messages for the user if their account was changed
+            if bool(old_is_admin) != bool(is_admin):
+                if is_admin:
+                    flash('Your account has been granted admin privileges. You now have access to the Admin Panel.', 'success')
+                else:
+                    flash('Your admin privileges have been revoked. You will be redirected to the appropriate portal on your next login.', 'info')
         
         # Create a user dict for JSON response
         user_dict = {
             'id': user_id,
             'username': username,
             'email': email,
-            'is_admin': is_admin,
-            'is_active': is_active,
-            'employee_id': employee_id_value
+            'is_admin': bool(is_admin),
+            'is_active': bool(is_active),
+            'employee_id': employee_id_value if 'employee_id_value' in locals() else employee_id,
+            'requires_relogin': requires_relogin
         }
+        
+        # Flash a success message
+        flash('User updated successfully', 'success')
         
         # For AJAX requests, return success response
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'status': 'success', 
                 'message': 'User updated successfully',
-                'user': user_dict
+                'user': user_dict,
+                'requiresRelogin': requires_relogin
             })
         
         return redirect(url_for('auth.admin_users'))

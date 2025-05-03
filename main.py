@@ -63,7 +63,29 @@ def inject_user():
         with session_scope() as db_session:
             user = db_session.query(User).filter_by(id=session['user_id']).first()
             if user:
-                user_data = user.to_dict()
+                user_data = {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'is_admin': bool(user.is_admin),  # Ensure is_admin is properly cast to boolean
+                    'is_active': user.is_active,
+                    'employee_id': user.employee_id
+                }
+                
+                # Add user_role to the object if it exists in session
+                if 'user_role' in session:
+                    user_data['user_role'] = session['user_role']
+    
+    # If we couldn't get user data from the database but have session data, use that as fallback
+    if user_data is None and 'user_id' in session:
+        user_data = {
+            'id': session.get('user_id'),
+            'username': session.get('username'),
+            'is_admin': bool(session.get('is_admin', False)),  # Ensure is_admin is properly cast to boolean
+            'user_role': session.get('user_role', 'Employee')
+        }
+    
+    print(f"Context user data: {user_data}")  # Debug print to see what's being provided to templates
     return dict(current_user=user_data)
 
 @app.route("/")
