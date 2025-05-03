@@ -496,57 +496,160 @@ def admin_register():
             flash('Passwords do not match', 'error')
             return redirect(url_for('auth.admin_register'))
         
+        # Check if employee_id is provided and validate it exists
+        employee_id_value = None
+        if employee_id and employee_id.strip():
+            try:
+                employee_id_value = int(employee_id)
+                
+                # Verify this employee exists in the database
+                employee = validate_employee(employee_id_value)
+                if not employee:
+                    flash(f'Error: Employee ID {employee_id_value} does not exist in the system. Please add the employee first or leave the field empty.', 'error')
+                    return redirect(url_for('auth.admin_register'))
+                
+                print(f"Employee ID {employee_id_value} validated successfully.")
+                
+            except ValueError:
+                flash('Employee ID must be a valid number', 'error')
+                return redirect(url_for('auth.admin_register'))
+        
         try:
-            conn = sqlite3.connect(DB_PATH)
-            cursor = conn.cursor()
+            # Check for existing username and email in both databases to avoid duplication errors
+            # Check SQL Server first (primary database)
+            username_exists = False
+            email_exists = False
             
-            # Check if username already exists
-            cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-            if cursor.fetchone():
-                flash('Username already exists', 'error')
+            if use_sql_server():
+                try:
+                    sql_conn = get_sqlserver_connection()
+                    sql_cursor = sql_conn.cursor()
+                    
+                    # Check for existing username
+                    sql_cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+                    if sql_cursor.fetchone():
+                        username_exists = True
+                    
+                    # Check for existing email
+                    sql_cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+                    if sql_cursor.fetchone():
+                        email_exists = True
+                    
+                    sql_conn.close()
+                except Exception as e:
+                    print(f"Error checking SQL Server for existing user: {str(e)}")
+            
+            # Also check SQLite for redundancy
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                
+                # Check if username already exists
+                cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+                if cursor.fetchone():
+                    username_exists = True
+                
+                # Check if email already exists
+                cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+                if cursor.fetchone():
+                    email_exists = True
+                
                 conn.close()
+            except Exception as e:
+                print(f"Error checking SQLite for existing user: {str(e)}")
+            
+            # Show appropriate error message if username or email already exists
+            if username_exists:
+                flash('Username already exists. Please choose a different username.', 'error')
                 return redirect(url_for('auth.admin_register'))
             
-            # Check if email already exists
-            cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
-            if cursor.fetchone():
-                flash('Email already exists', 'error')
-                conn.close()
+            if email_exists:
+                flash('Email address already exists. Please use a different email.', 'error')
                 return redirect(url_for('auth.admin_register'))
             
-            # Create new user
-            employee_id_value = int(employee_id) if employee_id and employee_id.isdigit() else None
-            
-            # Make is_admin a proper boolean for SQLite
+            # Make is_admin a proper boolean for database
             is_admin_value = 1 if is_admin else 0
             
-            print(f"Inserting new user: {username}, {email}, is_admin={is_admin_value}, employee_id={employee_id_value}")
+            # Try to create user in SQL Server (primary database) first
+            if use_sql_server():
+                try:
+                    sql_conn = get_sqlserver_connection()
+                    sql_cursor = sql_conn.cursor()
+                    
+                    # Create user in SQL Server
+                    sql_cursor.execute(
+                        "INSERT INTO users (username, email, password_hash, is_admin, is_active, employee_id, date_joined) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+                        (username, email, generate_password_hash(password), is_admin_value, 1, employee_id_value)
+                    )
+                    sql_conn.commit()
+                    print(f"User {username} created in SQL Server")
+                    sql_conn.close()
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f"Error creating user in SQL Server: {error_msg}")
+                    # Check for specific error types to provide more user-friendly messages
+                    if "duplicate key" in error_msg.lower():
+                        if "ix_users_username" in error_msg:
+                            flash("Username already exists. Please choose a different username.", 'error')
+                        elif "ix_users_email" in error_msg:
+                            flash("Email address already exists. Please use a different email.", 'error')
+                        else:
+                            flash("This username or email already exists in the system.", 'error')
+                    else:
+                        flash(f"Error creating user: {str(e)}", 'error')
+                    return redirect(url_for('auth.admin_register'))
             
-            cursor.execute(
-                "INSERT INTO users (username, email, password_hash, is_admin, employee_id) VALUES (?, ?, ?, ?, ?)",
-                (username, email, generate_password_hash(password), is_admin_value, employee_id_value)
-            )
-            
-            conn.commit()
-            conn.close()
+            # Always try to create in SQLite as backup
+            try:
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                
+                print(f"Inserting new user: {username}, {email}, is_admin={is_admin_value}, employee_id={employee_id_value}")
+                
+                cursor.execute(
+                    "INSERT INTO users (username, email, password_hash, is_admin, employee_id, date_joined) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+                    (username, email, generate_password_hash(password), is_admin_value, employee_id_value)
+                )
+                
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                print(f"Warning: Error creating backup user in SQLite (not critical): {str(e)}")
+                # Continue since SQL Server is primary
             
             # Also add the user through SQLAlchemy for better integration
-            with session_scope() as session:
-                new_user = User(
-                    username=username,
-                    email=email,
-                    is_admin=is_admin,
-                    employee_id=employee_id_value
-                )
-                new_user.set_password(password)
-                session.add(new_user)
-                # Commit is handled by session_scope context manager
+            try:
+                with session_scope() as session:
+                    new_user = User(
+                        username=username,
+                        email=email,
+                        is_admin=is_admin,
+                        employee_id=employee_id_value
+                    )
+                    new_user.set_password(password)
+                    session.add(new_user)
+                    # Commit is handled by session_scope context manager
+            except Exception as e:
+                print(f"Warning: Error creating user via SQLAlchemy (not critical): {str(e)}")
+                # Continue since we've already inserted directly
                 
             flash('User registered successfully', 'success')
             return redirect(url_for('auth.admin_users'))
         except Exception as e:
-            print(f"Error registering user: {str(e)}")
-            flash(f'Error registering user: {str(e)}', 'error')
+            error_msg = str(e)
+            print(f"Error registering user: {error_msg}")
+            
+            # Provide user-friendly error messages
+            if "duplicate key" in error_msg.lower():
+                if "username" in error_msg.lower():
+                    flash("Username already exists. Please choose a different username.", 'error')
+                elif "email" in error_msg.lower():
+                    flash("Email address already exists. Please use a different email.", 'error')
+                else:
+                    flash("This username or email already exists in the system.", 'error')
+            else:
+                flash(f"Error registering user: {str(e)}", 'error')
+                
             return redirect(url_for('auth.admin_register'))
     
     return render_template("admin/register_user.html")
@@ -616,6 +719,24 @@ def delete_user(user_id):
         print(f"Error deleting user from SQL Server: {str(e)}")
         # Continue since we at least deleted from SQLite
     
+    # Invalidate session for the deleted user (if they're currently logged in)
+    from flask import current_app
+    with current_app.app_context():
+        # Get the session interface
+        session_interface = current_app.session_interface
+        
+        # For all active sessions
+        for sid in list(session_interface.cache.keys()) if hasattr(session_interface, 'cache') else []:
+            try:
+                # Load the session data
+                session_data = session_interface.cache.get(sid)
+                if session_data and 'user_id' in session_data and session_data['user_id'] == user_id:
+                    # Clear this session
+                    session_interface.cache.delete(sid)
+                    print(f"Cleared session {sid} for deleted user {user_id}")
+            except Exception as e:
+                print(f"Error while checking session {sid}: {str(e)}")
+    
     return jsonify({'status': 'success', 'message': 'User deleted successfully'})
 
 @auth.route("/admin/users/update/<int:user_id>", methods=['POST'])
@@ -640,6 +761,22 @@ def update_user(user_id):
         # Check passwords match if provided
         if password and password != confirm_password:
             return jsonify({'status': 'error', 'message': 'Passwords do not match'}), 400
+        
+        # Check if employee_id is provided and validate it exists
+        employee_id_value = None
+        if employee_id and employee_id.strip():
+            try:
+                employee_id_value = int(employee_id)
+                
+                # Verify this employee exists in the database
+                employee = validate_employee(employee_id_value)
+                if not employee:
+                    return jsonify({'status': 'error', 'message': f'Employee ID {employee_id_value} does not exist in the system. Please add the employee first or leave the field empty.'}), 400
+                
+                print(f"Employee ID {employee_id_value} validated successfully.")
+                
+            except ValueError:
+                return jsonify({'status': 'error', 'message': 'Employee ID must be a valid number'}), 400
         
         # Track if admin status is being changed for the current logged-in user
         requires_relogin = False
@@ -675,14 +812,6 @@ def update_user(user_id):
                     if sql_cursor.fetchone():
                         sql_conn.close()
                         return jsonify({'status': 'error', 'message': 'Email already in use by another user in SQL Server'}), 400
-                    
-                    # Convert form values to appropriate types
-                    employee_id_value = None
-                    if employee_id and employee_id.strip():
-                        try:
-                            employee_id_value = int(employee_id)
-                        except ValueError:
-                            employee_id_value = None
                     
                     # Handle checkbox values properly
                     is_admin_value = 1 if is_admin else 0
@@ -729,14 +858,6 @@ def update_user(user_id):
                 # If current_admin_status isn't set yet, get it from SQLite
                 if current_admin_status is None and user_sqlite:
                     current_admin_status = bool(user_sqlite[4])  # SQLite is_admin column
-                
-                # Convert form values to appropriate types
-                employee_id_value = None
-                if employee_id and employee_id.strip():
-                    try:
-                        employee_id_value = int(employee_id)
-                    except ValueError:
-                        employee_id_value = None
                 
                 # Handle checkbox values properly
                 is_admin_value = 1 if is_admin else 0
@@ -796,7 +917,7 @@ def update_user(user_id):
             'email': email,
             'is_admin': bool(is_admin),
             'is_active': bool(is_active),
-            'employee_id': employee_id_value if 'employee_id_value' in locals() else employee_id,
+            'employee_id': employee_id_value,
             'requires_relogin': requires_relogin
         }
         
