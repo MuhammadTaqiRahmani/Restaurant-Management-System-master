@@ -281,33 +281,59 @@ def admin_required(f):
             flash('Please login to access this page', 'error')
             return redirect(url_for('auth.login'))
         
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+        # First check the session for admin status - this should be most up-to-date
+        if session.get('is_admin', False):
+            # If session already has admin privileges, no need to check the database
+            # Just update last_activity and continue
+            import time
+            session['last_activity'] = time.time()
+            return f(*args, **kwargs)
+            
+        # If session doesn't show admin, check SQL Server (primary database)
+        is_admin = False
+        if use_sql_server():
+            try:
+                sql_conn = get_sqlserver_connection()
+                sql_cursor = sql_conn.cursor()
+                
+                # Check if user exists and is admin in SQL Server
+                sql_cursor.execute("SELECT is_admin FROM users WHERE id = ? AND is_active = 1", (session['user_id'],))
+                user_row = sql_cursor.fetchone()
+                
+                if user_row:
+                    # Get is_admin value from row
+                    is_admin = bool(user_row.is_admin if hasattr(user_row, 'is_admin') else user_row[0])
+                    
+                    # Update the session if needed
+                    if is_admin:
+                        session['is_admin'] = True
+                        print(f"Updated admin status in session from SQL Server check: {session['is_admin']}")
+                
+                sql_conn.close()
+            except Exception as e:
+                print(f"Error checking SQL Server for admin status: {str(e)}")
+                # Fall back to SQLite if SQL Server check fails
         
-        cursor.execute("SELECT * FROM users WHERE id = ? AND is_admin = 1 AND is_active = 1", (session['user_id'],))
-        user = cursor.fetchone()
-        
-        conn.close()
-        
-        # If user doesn't exist, is not an admin, or was deactivated
-        if not user:
-            # If user exists but is not admin, redirect to index
+        # Fallback: If not found in SQL Server or SQL Server wasn't available, check SQLite
+        if not is_admin:
             conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE id = ?", (session['user_id'],))
-            if cursor.fetchone():
-                flash('You need admin privileges to access this page', 'error')
-                cursor.close()
-                conn.close()
-                return redirect(url_for('index'))
-            cursor.close()
+            
+            cursor.execute("SELECT * FROM users WHERE id = ? AND is_admin = 1 AND is_active = 1", (session['user_id'],))
+            user = cursor.fetchone()
             conn.close()
             
-            # Otherwise clear session and redirect to login
-            session.clear()
-            flash('Your session has expired. Please login again.', 'error')
-            return redirect(url_for('auth.login'))
+            # If user is admin in SQLite, update session
+            if user:
+                is_admin = True
+                session['is_admin'] = True
+                print(f"Updated admin status in session from SQLite check: {session['is_admin']}")
+        
+        # If no admin access found in any database
+        if not is_admin:
+            flash('You need admin privileges to access this page', 'error')
+            return redirect(url_for('index'))
         
         # Check for session timeout (30 minutes)
         if 'last_activity' in session:
