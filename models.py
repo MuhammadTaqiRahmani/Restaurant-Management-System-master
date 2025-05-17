@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, DateTime, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, DateTime, Integer, String, ForeignKey, Boolean, Float, Date, func, extract
 from sqlalchemy.orm import relationship
 from database import Base
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -119,6 +119,45 @@ class Bill(Base):
     def calculate_total(self):
         self.total = sum(item.menu_item.price * item.quantity for item in self.order.items)
         return self.total
-    
 
-#  These are models, defined for the database
+class MonthlySales(Base):
+    __tablename__ = 'monthly_sales'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    year = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)  # 1-12 for Jan-Dec
+    total_sales = Column(Float, default=0.0)
+    order_count = Column(Integer, default=0)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'year': self.year,
+            'month': self.month,
+            'total_sales': self.total_sales,
+            'order_count': self.order_count,
+            'updated_at': self.updated_at
+        }
+    
+    @classmethod
+    def get_month_name(cls, month_number):
+        months = ["January", "February", "March", "April", "May", "June", 
+                 "July", "August", "September", "October", "November", "December"]
+        return months[month_number - 1] if 1 <= month_number <= 12 else "Unknown"
+
+class YearlySales(Base):
+    __tablename__ = 'yearly_sales'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    year = Column(Integer, nullable=False, unique=True)
+    total_sales = Column(Float, default=0.0)
+    order_count = Column(Integer, default=0)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'year': self.year,
+            'total_sales': self.total_sales,
+            'order_count': self.order_count,
+            'updated_at': self.updated_at
+        }

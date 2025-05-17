@@ -1,0 +1,283 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div class="main-panel">
+  <div class="content-wrapper">
+    <div class="row">
+      <div class="col-md-12 grid-margin">
+        <div class="row">
+          <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+            <h3 class="font-weight-bold">Sales Dashboard</h3>
+            <h6 class="font-weight-normal mb-0">Comprehensive overview of your restaurant's sales performance</h6>
+          </div>
+          <div class="col-12 col-xl-4">
+            <div class="justify-content-end d-flex">
+              <div class="dropdown flex-md-grow-1 flex-xl-grow-0">
+                <button class="btn btn-sm btn-light bg-white dropdown-toggle" type="button" id="dropdownMenuDate" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                  <i class="mdi mdi-calendar"></i> View Reports
+                </button>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuDate">
+                  <a class="dropdown-item" href="{{ url_for('months') }}">Monthly Reports</a>
+                  <a class="dropdown-item" href="{{ url_for('years') }}">Yearly Reports</a>
+                  {% if current_user.is_admin %}
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="#" onclick="processHistoricalData()">Process Historical Data</a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Performance Indicators -->
+    <div class="row">
+      <div class="col-md-3 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <p class="card-title text-md-center text-xl-left">Current Month Sales</p>
+            <div class="d-flex flex-wrap justify-content-between justify-content-md-center justify-content-xl-between align-items-center">
+              <h3 class="mb-0 mb-md-2 mb-xl-0 order-md-1 order-xl-0">Rs {{ current_month_sales|round(2) }}</h3>
+              <i class="ti-calendar icon-md text-muted mb-0 mb-md-3 mb-xl-0"></i>
+            </div>
+            <p class="mb-0 mt-2 text-{{ 'success' if mom_growth >= 0 else 'danger' }}">
+              <span>{{ mom_growth|abs|round(1) }}% {{ 'Increase' if mom_growth >= 0 else 'Decrease' }}</span>
+              <span> from last month</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <p class="card-title text-md-center text-xl-left">Current Year Sales</p>
+            <div class="d-flex flex-wrap justify-content-between justify-content-md-center justify-content-xl-between align-items-center">
+              <h3 class="mb-0 mb-md-2 mb-xl-0 order-md-1 order-xl-0">Rs {{ current_year_sales|round(2) }}</h3>
+              <i class="ti-user icon-md text-muted mb-0 mb-md-3 mb-xl-0"></i>
+            </div>
+            <p class="mb-0 mt-2 text-{{ 'success' if yoy_growth >= 0 else 'danger' }}">
+              <span>{{ yoy_growth|abs|round(1) }}% {{ 'Increase' if yoy_growth >= 0 else 'Decrease' }}</span>
+              <span> from last year</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <p class="card-title text-md-center text-xl-left">Average Monthly Sales</p>
+            <div class="d-flex flex-wrap justify-content-between justify-content-md-center justify-content-xl-between align-items-center">
+              <h3 class="mb-0 mb-md-2 mb-xl-0 order-md-1 order-xl-0">Rs {{ (current_year_sales / 12)|round(2) }}</h3>
+              <i class="ti-agenda icon-md text-muted mb-0 mb-md-3 mb-xl-0"></i>
+            </div>
+            <p class="mb-0 mt-2">Based on current year to date</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <p class="card-title text-md-center text-xl-left">Sales Projection</p>
+            <div class="d-flex flex-wrap justify-content-between justify-content-md-center justify-content-xl-between align-items-center">
+              <h3 class="mb-0 mb-md-2 mb-xl-0 order-md-1 order-xl-0">Rs {{ (current_year_sales * (12 / loop.index))|round(2) }}</h3>
+              <i class="ti-layers-alt icon-md text-muted mb-0 mb-md-3 mb-xl-0"></i>
+            </div>
+            <p class="mb-0 mt-2">Projected annual sales</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Sales Chart -->
+    <div class="row">
+      <div class="col-md-8 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <p class="card-title">Monthly Sales Trend (Current Year)</p>
+            <canvas id="monthlySalesChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <p class="card-title">Sales Distribution</p>
+            <canvas id="salesDistributionChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Yearly Sales Chart -->
+    <div class="row">
+      <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <p class="card-title">Yearly Sales History</p>
+            <canvas id="yearlySalesChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Data for monthly sales chart
+  var monthlyData = {{ monthly_data|tojson }};
+  
+  var months = monthlyData.map(function(item) { return item.month; });
+  var sales = monthlyData.map(function(item) { return item.total_sales; });
+  
+  // Create monthly sales chart
+  var monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
+  var monthlySalesChart = new Chart(monthlySalesCtx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [
+        {
+          label: 'Monthly Sales',
+          data: sales,
+          backgroundColor: 'rgba(75, 73, 172, 0.6)',
+          borderColor: 'rgba(75, 73, 172, 1)',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Sales (Rs)'
+          }
+        }
+      }
+    }
+  });
+  
+  // Data for yearly sales chart
+  var yearlyData = {{ yearly_data|tojson }};
+  
+  var years = yearlyData.map(function(item) { return item.year; });
+  var yearlyTotals = yearlyData.map(function(item) { return item.total_sales; });
+  
+  // Create yearly sales chart
+  var yearlySalesCtx = document.getElementById('yearlySalesChart').getContext('2d');
+  var yearlySalesChart = new Chart(yearlySalesCtx, {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: 'Yearly Sales',
+          data: yearlyTotals,
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Sales (Rs)'
+          }
+        }
+      }
+    }
+  });
+  
+  // Create sales distribution doughnut chart
+  var salesDistCtx = document.getElementById('salesDistributionChart').getContext('2d');
+  var salesDistChart = new Chart(salesDistCtx, {
+    type: 'doughnut',
+    data: {
+      labels: months,
+      datasets: [
+        {
+          data: sales,
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(199, 199, 199, 0.7)',
+            'rgba(83, 102, 255, 0.7)',
+            'rgba(40, 159, 64, 0.7)',
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)'
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(199, 199, 199, 1)',
+            'rgba(83, 102, 255, 1)',
+            'rgba(40, 159, 64, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)'
+          ],
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            boxWidth: 10
+          }
+        }
+      }
+    }
+  });
+  
+  // Function to process historical data
+  function processHistoricalData() {
+    if (confirm('This will process all historical bill data to generate monthly and yearly sales records. Continue?')) {
+      fetch('{{ url_for("process_sales_history") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          alert('Historical sales data processed successfully.');
+          location.reload();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        alert('An error occurred while processing historical data.');
+      });
+    }
+  }
+</script>
+
+{% endblock %}

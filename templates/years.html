@@ -1,34 +1,25 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<link rel="stylesheet" href="static/css/vertical-layout-light/roles.css">
-<link rel="stylesheet" href="static/css/vertical-layout-light/days.css">
 <div class="main-panel">
   <div class="content-wrapper">
-    <div class="row">
-
-    </div>
     <div class="row">
       <div class="col-md-12 grid-margin">
         <div class="row">
           <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-            <h3 class="font-weight-bold">Monthly Sales Report</h3>
-            <h6 class="font-weight-normal mb-0">View and analyze monthly sales data for better business insights</h6>
+            <h3 class="font-weight-bold">Yearly Sales Report</h3>
+            <h6 class="font-weight-normal mb-0">View and analyze yearly sales data trends for strategic business planning</h6>
           </div>
           <div class="col-12 col-xl-4">
             <div class="justify-content-end d-flex">
-              <div class="dropdown flex-md-grow-1 flex-xl-grow-0">
-                <form id="year-form" method="GET" action="{{ url_for('months') }}">
-                  <select class="form-control" id="year-select" name="year" onchange="document.getElementById('year-form').submit()">
-                    {% for year in available_years %}
-                      <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
-                    {% endfor %}
-                  </select>
-                </form>
+              <div class="mr-2">
+                <a href="{{ url_for('export_yearly_sales') }}" class="btn btn-primary">Export to CSV</a>
               </div>
-              <div class="ml-2">
-                <a href="{{ url_for('export_monthly_sales', year=current_year) }}" class="btn btn-primary">Export to CSV</a>
-              </div>
+              {% if request.referrer %}
+              <a href="{{ request.referrer }}" class="btn btn-outline-primary">Back</a>
+              {% else %}
+              <a href="{{ url_for('index') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -38,30 +29,30 @@
       <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
           <div class="card-body">
-            <p class="card-title">Monthly Sales Overview</p>
+            <p class="card-title">Yearly Sales Overview</p>
             <div class="row">
               <div class="col-12">
                 <div class="table-responsive">
                   <table class="table table-striped table-hover">
                     <thead>
                       <tr>
-                        <th>Month</th>
+                        <th>Year</th>
                         <th>Total Sales (Rs)</th>
                         <th>Order Count</th>
                         <th>Average Order Value</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {% for month in monthly_sales %}
+                      {% for year in yearly_sales %}
                       <tr>
-                        <td>{{ month.month }}</td>
-                        <td>{{ month.total_sales|round(2) }}</td>
-                        <td>{{ month.order_count }}</td>
-                        <td>{% if month.order_count > 0 %}{{ (month.total_sales / month.order_count)|round(2) }}{% else %}0{% endif %}</td>
+                        <td>{{ year.year }}</td>
+                        <td>{{ year.total_sales|round(2) }}</td>
+                        <td>{{ year.order_count }}</td>
+                        <td>{% if year.order_count > 0 %}{{ (year.total_sales / year.order_count)|round(2) }}{% else %}0{% endif %}</td>
                       </tr>
                       {% else %}
                       <tr>
-                        <td colspan="4" class="text-center">No sales data available for {{ current_year }}</td>
+                        <td colspan="4" class="text-center">No yearly sales data available</td>
                       </tr>
                       {% endfor %}
                     </tbody>
@@ -77,32 +68,31 @@
       <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
           <div class="card-body">
-            <p class="card-title">Monthly Sales Chart</p>
-            <canvas id="monthlySalesChart"></canvas>
+            <p class="card-title">Yearly Sales Trend</p>
+            <canvas id="yearlySalesChart"></canvas>
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  // Data for monthly sales chart
-  var monthlyData = {{ monthly_sales|tojson }};
+  // Data for yearly sales chart
+  var yearlyData = {{ yearly_sales|tojson }};
   
-  var months = monthlyData.map(function(item) { return item.month; });
-  var sales = monthlyData.map(function(item) { return item.total_sales; });
-  var orderCounts = monthlyData.map(function(item) { return item.order_count; });
+  var years = yearlyData.map(function(item) { return item.year; });
+  var sales = yearlyData.map(function(item) { return item.total_sales; });
+  var orderCounts = yearlyData.map(function(item) { return item.order_count; });
   
-  // Create monthly sales chart
-  var monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
-  var monthlySalesChart = new Chart(monthlySalesCtx, {
+  // Create yearly sales chart
+  var yearlySalesCtx = document.getElementById('yearlySalesChart').getContext('2d');
+  var yearlySalesChart = new Chart(yearlySalesCtx, {
     type: 'bar',
     data: {
-      labels: months,
+      labels: years,
       datasets: [
         {
           label: 'Total Sales (Rs)',

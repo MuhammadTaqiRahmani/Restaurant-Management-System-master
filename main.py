@@ -1,11 +1,11 @@
 import base64
 from collections import defaultdict
-import datetime
 import io
 import os
-from flask import Flask, flash, redirect, render_template, request, jsonify, session, url_for
+import csv
+from flask import Flask, flash, redirect, render_template, request, jsonify, session, url_for, Response
 from sqlalchemy.orm import sessionmaker, joinedload
-from models import OrderItem, Roles, Employees, Category, Menu, Status, Order, User
+from models import OrderItem, Roles, Employees, Category, Menu, Status, Order, User, MonthlySales, YearlySales
 from database import engine, session_scope, recreate_database
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import func
@@ -14,6 +14,10 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from sqlalchemy import extract
 from authentication import auth, login_required, admin_required
+from sales_helpers import update_monthly_sales, update_yearly_sales, get_monthly_sales_data, get_yearly_sales_data, process_historical_sales_data
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, Response
+import os, json, csv, io
+from functools import wraps
 
 app = Flask(__name__)
 app.config['STATIC_BASE_URL'] = os.getenv('STATIC_BASE_URL', '/static')
@@ -22,7 +26,37 @@ app.secret_key = 'Anti_Minsh'
 app.register_blueprint(auth, url_prefix='/')
 
 # IMPORTANT: Comment out this line after first run - it will DELETE ALL DATA each time the app starts
-# recreate_database()
+# recreate_database()  # Commented out to prevent database recreation on server restart
+
+# Initialize sales data tables
+def initialize_sales_data():
+    with session_scope() as db_session:
+        # Check if monthly_sales table has data
+        monthly_data_exists = db_session.query(MonthlySales).first() is not None
+        if not monthly_data_exists:
+            print("Initializing sales data...")
+            # Create dummy sales data for current year
+            current_year = datetime.now().year
+            for month in range(1, 13):
+                monthly_sales = MonthlySales(
+                    year=current_year,
+                    month=month,
+                    total_sales=0.0,
+                    order_count=0
+                )
+                db_session.add(monthly_sales)
+            
+            # Create a yearly sales record for current year
+            yearly_sales = YearlySales(
+                year=current_year,
+                total_sales=0.0,
+                order_count=0
+            )
+            db_session.add(yearly_sales)
+            db_session.commit()
+            print("Sales data initialized successfully")
+        else:
+            print("Sales data already exists, skipping initialization")
 
 # Create initial admin user function
 def create_initial_admin():
@@ -53,6 +87,7 @@ def before_first_request():
     # Use a session flag to ensure this runs only once
     if not session.get('_initial_setup_done'):
         create_initial_admin()
+        initialize_sales_data()  # Initialize sales data tables
         session['_initial_setup_done'] = True
 
 # Inject user data into all templates
@@ -150,52 +185,94 @@ def management():
 @app.route("/months")
 @login_required
 def months():
+    year = request.args.get('year', type=int)
+    if year is None:
+        year = datetime.now().year
+    
+    monthly_data = get_monthly_sales_data(year)
+    
+    # Get list of available years for the dropdown
     with session_scope() as db_session:
-        # Query to get monthly sales data
-        current_year = datetime.now().year
-        monthly_sales = db_session.query(
-            extract('month', Bill.time).label('month'),
-            func.sum(Bill.total_amount).label('total_sales')
-        ).filter(extract('year', Bill.time) == current_year)\
-         .group_by(extract('month', Bill.time))\
-         .order_by(extract('month', Bill.time))\
-         .all()
-        
-        # Convert month numbers to month names and format results
-        month_names = ["January", "February", "March", "April", "May", "June", 
-                       "July", "August", "September", "October", "November", "December"]
-        formatted_data = []
-        
-        for month_num, total in monthly_sales:
-            month_name = month_names[int(month_num) - 1]  # Convert to 0-based index
-            formatted_data.append({
-                'month': month_name,
-                'total': total
-            })
+        available_years = db_session.query(extract('year', Bill.time).distinct()).order_by(extract('year', Bill.time)).all()
+        available_years = [int(year[0]) for year in available_years]
+        if not available_years:  # Fallback if no data exists
+            available_years = [datetime.now().year]
             
-    return render_template("days.html", monthly_sales=formatted_data)
+    return render_template("months.html", monthly_sales=monthly_data, 
+                          current_year=year, available_years=available_years)
 
 @app.route("/years")
 @login_required
 def years():
-    with session_scope() as db_session:
-        # Query to get yearly sales data
-        yearly_sales = db_session.query(
-            extract('year', Bill.time).label('year'),
-            func.sum(Bill.total_amount).label('total_sales')
-        ).group_by(extract('year', Bill.time))\
-         .order_by(extract('year', Bill.time))\
-         .all()
-        
-        formatted_data = []
-        for year, total in yearly_sales:
-            formatted_data.append({
-                'year': int(year),
-                'total': total
-            })
-            
-    return render_template("months.html", yearly_sales=formatted_data)
+    # Get yearly sales data for the past 5 years by default
+    yearly_data = get_yearly_sales_data()
+    
+    return render_template("years.html", yearly_sales=yearly_data)
 
+# Add this new route to process historical sales data (admin only)
+@app.route("/process_historical_sales", methods=['POST'])
+@login_required
+@admin_required
+def process_sales_history():
+    try:
+        process_historical_sales_data()
+        return jsonify({'status': 'success', 'message': 'Historical sales data processed successfully'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Error processing historical data: {str(e)}'}), 500
+
+# Add a new route for sales dashboard
+@app.route("/sales_dashboard")
+@login_required
+def sales_dashboard():
+    # Get monthly data for current year
+    monthly_data = get_monthly_sales_data()
+    
+    # Get yearly data for the past 5 years
+    yearly_data = get_yearly_sales_data()
+    
+    # Calculate some aggregate statistics
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    
+    current_month_sales = next((item['total_sales'] for item in monthly_data if item['month_num'] == current_month), 0)
+    
+    # Find previous month's sales
+    prev_month = current_month - 1 if current_month > 1 else 12
+    prev_month_year = current_year if current_month > 1 else current_year - 1
+    prev_month_sales = next(
+        (item['total_sales'] for item in monthly_data if item['month_num'] == prev_month), 
+        0
+    )
+    
+    # Calculate month-over-month growth
+    if prev_month_sales > 0:
+        mom_growth = ((current_month_sales - prev_month_sales) / prev_month_sales) * 100
+    else:
+        mom_growth = 100  # If no previous sales, growth is 100%
+    
+    # Find current year sales
+    current_year_sales = next((item['total_sales'] for item in yearly_data if item['year'] == current_year), 0)
+    
+    # Find previous year's sales
+    prev_year = current_year - 1
+    prev_year_sales = next(
+        (item['total_sales'] for item in yearly_data if item['year'] == prev_year), 
+        0
+    )
+    
+    # Calculate year-over-year growth
+    if prev_year_sales > 0:
+        yoy_growth = ((current_year_sales - prev_year_sales) / prev_year_sales) * 100
+    else:
+        yoy_growth = 100  # If no previous sales, growth is 100%
+        
+    return render_template("sales_dashboard.html", 
+                          monthly_data=monthly_data,
+                          yearly_data=yearly_data,
+                          current_month_sales=current_month_sales,
+                          current_year_sales=current_year_sales,
+                          mom_growth=mom_growth,
+                          yoy_growth=yoy_growth)
 
 @app.route("/bill")
 @login_required
@@ -223,6 +300,43 @@ def bill():
 
     return render_template("bill.html", customer_status_ids_dict=customer_status_ids_dict)
 
+@app.route("/generate_bill/<int:order_id>", methods=['POST'])
+@login_required
+def generate_bill(order_id):
+    with session_scope() as db_session:
+        # Check if bill already exists for this order
+        existing_bill = db_session.query(Bill).filter(Bill.order_id == order_id).first()
+        if existing_bill:
+            return jsonify({'status': 'error', 'message': 'Bill already generated for this order'}), 400
+            
+        order = db_session.query(Order).filter(Order.id == order_id).first()
+        if not order:
+            return jsonify({'status': 'error', 'message': 'Order not found'}), 404
+            
+        # Calculate bill total
+        order_items = db_session.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+        total_bill = sum(
+            item.menu_item.price * item.quantity 
+            for item in order_items
+        )
+        
+        # Create new bill
+        bill = Bill(order_id=order.id, total=total_bill)
+        db_session.add(bill)
+        db_session.flush()  # Flush to get the bill ID
+        
+        # Update monthly and yearly sales data
+        update_monthly_sales(total_bill, bill.time)
+        update_yearly_sales(total_bill, bill.time)
+        
+        db_session.commit()
+        
+        return jsonify({
+            'status': 'success', 
+            'message': 'Bill generated successfully',
+            'bill_id': bill.id,
+            'total': bill.total
+        })
 
 @app.route("/roles", methods=['GET', 'POST'])
 @login_required
@@ -713,6 +827,72 @@ def update_order_item(menu_item_id):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route("/export_monthly_sales/<int:year>", methods=['GET'])
+@login_required
+@admin_required
+def export_monthly_sales(year):
+    """Export monthly sales data for a specific year as CSV"""
+    monthly_data = get_monthly_sales_data(year)
+    
+    # Create a CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Month', 'Year', 'Total Sales', 'Order Count', 'Average Order Value'])
+    
+    # Write data rows
+    for month in monthly_data:
+        writer.writerow([
+            month['month'], 
+            month['year'], 
+            month['total_sales'], 
+            month['order_count'],
+            month['average_order'] if month['order_count'] > 0 else 0
+        ])
+    
+    # Prepare the response
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename=monthly_sales_{year}.csv"}
+    )
+
+@app.route("/export_yearly_sales", methods=['GET'])
+@login_required
+@admin_required
+def export_yearly_sales():
+    """Export yearly sales data as CSV"""
+    # Get the date range parameters
+    start_year = request.args.get('start_year', type=int)
+    end_year = request.args.get('end_year', type=int)
+    
+    yearly_data = get_yearly_sales_data(start_year, end_year)
+    
+    # Create a CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Year', 'Total Sales', 'Order Count', 'Average Order Value'])
+    
+    # Write data rows
+    for year in yearly_data:
+        writer.writerow([
+            year['year'], 
+            year['total_sales'], 
+            year['order_count'],
+            year['average_order'] if year['order_count'] > 0 else 0
+        ])
+    
+    # Prepare the response
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=yearly_sales_data.csv"}
+    )
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
